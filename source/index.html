@@ -1,0 +1,102 @@
+<!DOCTYPE html><html id="top" lang="en"><head><meta charset="UTF-8">
+<title>Earwiggle Music Player</title>
+<meta name="author"      content="Harald Markus Wirth, https://harald.ist.org/">
+<meta name="description" content="Music, I created; Vanilla CSS/JS audio player">
+<meta name="keywords"    content="music,player,harryf,tracker,fruity,loops">
+<meta name="robots"      content="index,follow">
+<meta name="viewport"    content="width=device-width, initial-scale=1">
+<link rel="help" href="README">
+<link rel="icon" href="image/earwiggle_icon.png" type="image/png">
+<link rel="preload" href="image/earwiggle_icon.png" as="image">
+<link rel="stylesheet" href="main.css" type="text/css">
+<script type="module" src="boot.js" async></script>
+<style class="noscript">
+
+	html, body { height:100%; margin:0; }
+	body.initializing { display:flex; align-items:center; justify-content:center; text-align:center; background:#000; color:#fff; }
+	body.initializing > :not(.noscript) { position:absolute; left:-999999px; }
+	.noscript img { animation:LOADING 2.5s infinite; }
+	.noscript strong { display:block; color:#f00; font-size:1.2em; margin-bottom:0.5rem; }
+	@keyframes LOADING {
+		0%   { transform:scaleX( 1) scaleY( 1); }
+		25%  { transform:scaleX( 1) scaleY(-1); }
+		50%  { transform:scaleX(-1) scaleY(-1); }
+		75%  { transform:scaleX(-1) scaleY( 1); }
+	}
+
+</style><style>
+
+	.hidden { display:none !important; }
+
+</style></head><body class="initializing custom_range_inputs">
+
+	<div class="noscript">
+		<img src="image/earwiggle_icon.png" width="64" height="64" alt="Earwiggle Icon">
+		<h1>Earwiggle</h1>
+		<p>Please enable JavaScript</p>
+	</div>
+	<script class="noscript">document.querySelector('.noscript p').innerText = 'Loading...';</script>
+
+	<section class="Xsimple initializing audio_player">
+		<ul class="album_list" Xtabindex="0"></ul>
+		<form class="filter">
+			<input name="filter_text" type="text" placeholder="Artist, album, title">
+			<button name="filter_apply">Filter</button>
+			<button name="filter_clear">All Songs</button>
+		</form>
+		<ol class="playlist" Xtabindex="0"></ol>
+		<div class="now_playing">
+			<h2>
+				<span class="artist">Earwiggle</span>
+				<span class="album"></span>
+				<span class="song">Music Player</span>
+			</h2>
+		</div>
+		<div class="album_cover">
+			<a href="covers/earwiggle_music_player.jpg" target="_blank">
+				<img src="covers/earwiggle_music_player.jpg" alt="Album cover">
+			</a>
+			<p class="comments"><b>Eardrums not included</b></p>
+		</div>
+		<div class="controls">
+			<button name="back"      class="audio_track_back" title="Skip to previous song">Back</button>
+			<button name="stop"      class="audio_stop"       title="Stop playing">Stop</button>
+			<button name="play"      class="audio_play"       title="Play/pause">Play</button>
+			<button name="pause"     class="audio_pause"      title="Pause playback">Pause</button>
+			<button name="next"      class="audio_track_next" title="Skip to next song">Next</button>
+			<button name="loop_song" class="audio_loop_song"  title="Loop song">Loop Song</button>
+			<button name="loop_list" class="audio_loop_list"  title="Loop playlist">Loop Playlist</button>
+			<input name="volume"   type="range" min="0" max="1" step="any" value="0.25" title="Volume">
+			<button name="import"    class="audio_eject"      title="Play your own music">Import Songs</button>
+			<button name="config"    class="audio_config"     title="Toggle starfield animation">Configuration</button>
+			<button name="settings"  class="audio_tuning"     title="Advanced Controls">Waveform, EQ, Analyser</button>
+			<input name="progress" type="range" min="0" max="1" step="any" value="0" title="Progress/Seek">
+			<span class="timestamp">00:00:00.0</span>
+		</div>
+		<canvas class="waveform"></canvas>
+		<div class="equalizer">
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		</div>
+		<canvas class="analyser"></canvas>
+		<pre class="lyrics"></pre>
+	</section>
+
+	<div class="hidden">
+		<button accesskey="d" onclick="location.href='?debug'">Debug mode, test sounds</button>
+		<button accesskey="r" onclick="location.href='?reset'">Clear localStorage</button>
+		<button accesskey="q" onclick="window.open('/tools/qrcode/show.php?text=' + location.href)">QR link to this page</button>
+	</div>
+	<pre class="hidden debug_stats"></pre>
+
+</body></html>
