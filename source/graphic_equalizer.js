@@ -3,22 +3,25 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { DEBUG } from './main.js';
 import { clamp, newElement } from './helpers.js';
 
-const STORAGE_KEY      = 'earwiggleGraphicEqualizer';
-const FREQUENCY_MIN    = 20;
-const FREQUENCY_MAX    = 16000;   // Max. 22050
-const FREQUENCY_CURVE  = 1;       // c < 1: Base separated more (16, 98, 352...), c > 1: Bases closer (16, 64, 237...)
-const BAND_SLIDER_STEP = 0.1;     // Change of range input value [-1..+1] with mouse wheel
+let instanceNr = 0;
 
-const CHAIN_LENGTH     = 8;       // Nr. chained filters per band, increases EQ effectiveness and CPU load
-const FILTER_GAIN      = 2;       // Factor for gain value of the filters, increases EQ effectiveness, default 1
-const Q_FACTOR         = 1;       // Tweak band width of the filters, q > 1: narrow, q < 1: broad
-const FILTER_Q         = 1.4;     //... Now dynamic
-
-export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, loadConfig) {
+export function GraphicEqualizer(parameters) {
 	const self = this;
+
+	const {
+		SETTINGS, DEBUG,
+		audioContext, source, rangeInputs, freqSpans,
+		loadConfig,
+	 } = parameters;
+
+	const {
+		STORAGE_KEY,
+		BAND_SLIDER_STEP, Q_FACTOR,
+		FREQUENCY_CURVE, FREQUENCY_MIN, FREQUENCY_MAX,
+		CHAIN_LENGTH, FILTER_GAIN, FILTER_Q,
+	} = SETTINGS.GRAPHIC_EQUALIZER;
 
 	this.filters;
 	this.output;
@@ -120,14 +123,14 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.saveSettings = function() {
-		if (DEBUG) console.log('Saving settings to localStorage: %c' + STORAGE_KEY, 'color:#c40');
+		if (DEBUG.STORAGE) console.log('Saving settings to localStorage: %c' + STORAGE_KEY, 'color:#c40');
 		const data = [...rangeInputs].map(input => parseFloat(input.value));
 		const json = JSON.stringify(data);
 		localStorage.setItem(STORAGE_KEY, json);
 	}
 
 	this.loadSettings = function() {
-		if (DEBUG) console.log('Loading settings from localStorage: %c' + STORAGE_KEY, 'color:#47f');
+		if (DEBUG.STORAGE) console.log('Loading settings from localStorage: %c' + STORAGE_KEY, 'color:#47f');
 
 		const json = localStorage.getItem(STORAGE_KEY);
 		if (json) {
@@ -141,7 +144,7 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 
 	this.clearSettings = function() {
 		localStorage.removeItem(STORAGE_KEY);
-		if (DEBUG) console.log('Settings cleared: %c' + STORAGE_KEY, 'color:red');
+		if (DEBUG.STORAGE) console.log('Storage cleared: %c' + STORAGE_KEY, 'color:red');
 	}
 
 
@@ -149,9 +152,9 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.exit = function() {
-		if (DEBUG) console.log('GraphicEqualizer: exit');
+	this.instanceNr = ++instanceNr;
 
+	this.exit = function() {
 		source.disconnect(self.filters[0]);
 		for (let b = 0; b < self.nrBands; b++) {
 			for (let f = 0; f < CHAIN_LENGTH; f++) {
@@ -168,11 +171,13 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 		});
 		removeEventListener('beforeunload', self.saveSettings);
 
-		self.saveSettings();
+		if (DEBUG.CLEAR_STORAGE) self.clearSettings; else self.saveSettings();
+
+		if (DEBUG.ENABLED) console.log('GraphicEqualizer: exit', self.instanceNr);
 	}
 
 	this.init = function() {
-		if (DEBUG) console.log('GraphicEqualizer source:', source.channelCount, 'channels');
+		if (DEBUG.STREAMS) console.log('GraphicEqualizer source:', source.channelCount, 'channels');
 
 		self.nrBands = rangeInputs.length;
 
@@ -190,13 +195,13 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 			return Math.round(r);
 		}
 		const frequencies = Array.from({ length: n }).map(toFrequency);
-		if (DEBUG) console.log('GraphicEqualizer frequencies:', frequencies);
+		if (DEBUG.GRAPHIC_EQUALIZER) console.log('GraphicEqualizer frequencies:', frequencies);
 
 		const toQValue = (_, i) => Math.sqrt(i > 0 ? frequencies[i] / frequencies[i - 1] : 1) * Q_FACTOR;
 		const QValues = frequencies.map(toQValue);
 
 		// Create all filters
-		if (DEBUG) console.groupCollapsed(
+		if (DEBUG.EQ_FILTERS) console.groupCollapsed(
 			'GraphicEqualizer: Creating',
 			self.nrBands,
 			'*',
@@ -211,7 +216,7 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 			self.filters[b] = [];
 			for (let f = 0; f < CHAIN_LENGTH; f++) {
 				const filter = audioContext.createBiquadFilter();
-				if (DEBUG) console.log(filter);
+				if (DEBUG.EQ_FILTERS) console.log(filter);
 				filter.type            = 'peaking';
 				filter.frequency.value = frequencies[b];
 				filter.gain     .value = 0;
@@ -219,7 +224,7 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 				self.filters[b].push(filter);
 			}
 		}
-		if (DEBUG) console.groupEnd();
+		if (DEBUG.EQ_FILTERS) console.groupEnd();
 
 		self.output = audioContext.createGain();
 
@@ -241,7 +246,7 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 		rangeInputs.forEach((r, i) => {
 			r.dataset.index = i;
 			r.addEventListener('input'      , on_band_input);
-			r.addEventListener('wheel'      , on_band_wheel);
+			//...r.addEventListener('wheel'      , on_band_wheel);
 			r.addEventListener('mousedown'  , on_band_reset);
 			r.addEventListener('contextmenu', prevent_context_menu);
 
@@ -260,14 +265,14 @@ export function GraphicEqualizer(audioContext, source, rangeInputs, freqSpans, l
 			set_filter(i, parseFloat(r.value));
 		});
 
-		if (loadConfig !== false) {
+		if (DEBUG.CLEAR_STORAGE) {
+			self.clearSettings();
+		} else {
 			self.loadSettings();
 			addEventListener('beforeunload', self.saveSettings);
-		} else {
-			self.clearSettings();
 		}
 
-		if (DEBUG) window.EQ = {
+		if (DEBUG.ENABLED) window.EQ = {
 			load  : self.loadSettings,
 			save  : self.saveSettings,
 			clear : self.clearSettings,

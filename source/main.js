@@ -3,25 +3,21 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { untab, newElement, getCSSVariable, setCSSVariable } from './helpers.js';
-import { AudioPlayer  } from './audio_player.js';
-import { MusicLibrary } from './music_library.js';
-const SHOW_STAR_FIELD = true;
-
-const GETParams    = new window.URLSearchParams(window.location.search);
-export const DEBUG = (location.hostname == 'harald.ist.neu') ^ (GETParams.get('debug') !== null);
-
-console.log(
-	'DEBUG =', (DEBUG ? 'true' : 'false') + ',',
-	location.hostname + '?debug =',
-	GETParams.get('debug'),
-);
+import { GETParams, getCSSvar, setCSSvar, newElement, wakeLock } from './helpers.js';
+import { untab, prefersReducedMotion } from './helpers.js';
+import { AudioPlayer   } from './audio_player.js';
+import { MusicLibrary  } from './music_library.js';
+import { UserInterface } from './user_interface.js';
 
 export function Application(parameters) {
 	const self = this;
 
+	const { SETTINGS, DEBUG, boot_message } = parameters;
+	const { DOM_SELECTORS, SHOW_STAR_FIELD } = SETTINGS;
+
 	this.elements;
 	this.audioPlayer;
+	this.ui;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -29,15 +25,19 @@ export function Application(parameters) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function update_debug_stats(statsElement) {
+		const now = Date.now();
+		const times = (
+			Object.entries(DEBUG.TIMES)
+			.sort((a, b) => b[1] - a[1])
+			.map(([name, time]) => (
+				`<tr><td>${name}</td><td>${(now - time)/1000}</td></tr>\n`
+			)).join('')
+		);
 		const make_json = (obj) => JSON.stringify(obj, null, '\t');
-		statsElement.innerText = (`
-totalPlayTime: ${self.audioPlayer.totalPlayTime}
-document.activeElement: ${
-	(document.activeElement.outerHTML).split('>', 1)[0] + '>'
-	//.replace(document.activeElement.innerHTML, '')
-}
-
-albums: ${make_json(self.audioPlayer.library.albums.map(a => ({...a, lyrics: 'REMOVED'}))) }
+		statsElement.innerHTML = untab(`
+			DEBUG.TIMES:
+			<table>${times}</table>
+			totalPlayTime: ${self.audioPlayer.totalPlayTime}
 		`);
 	}
 
@@ -57,34 +57,46 @@ albums: ${make_json(self.audioPlayer.library.albums.map(a => ({...a, lyrics: 'RE
 		await new Promise(done => setTimeout(done));
 		const iframe = document.querySelector('iframe.starfield');
 		enable = (enable === null) ? (iframe === null) : enable;
-		if (enable && iframe !== null) return;
-		if (!enable && iframe === null) return;
-		if (enable) {
+
+		if( enable
+		&& !(enable && iframe !== null)
+		&& !(!enable && iframe === null)
+		) {
 			const param = (self.audioPlayer.audio?.paused) ? '?paused' : '';
 			document.body.insertBefore(
 				newElement({
 					tagName    : 'iframe',
 					className  : 'starfield',
 					attributes : {
-						src : '/stubs/starfield/' + param,
+						src : 'starfield/' + param,
 					},
 				}),
 				self.elements.audioPlayer,
 			);
-			document.body.classList.add('starfield');
-			self.elements.config.classList.add('pressed');
+			//document.body.classList.add('starfield');
+			//self.elements.config.classList.add('pressed');
 		} else {
-			iframe.remove();
-			document.body.classList.remove('starfield');
-			self.elements.config.classList.remove('pressed');
+			iframe?.remove();
+			//document.body.classList.remove('starfield');
+			//self.elements.config.classList.remove('pressed');
 		}
+
+		document.body         .classList.toggle('starfield', enable);
+		self.elements.config  .classList.toggle('pressed'  , enable);
+		self.elements.lcdStars.classList.toggle('on'       , enable);
 	}
 
 	function on_keydown(event) {
-console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.altKey, event.key);
+		if (!event.shiftKey && !event.ctrlKey && !event.altKey && event.key == 'd') {
+			event.preventDefault();
+			document.body.classList.toggle('debug');
+			return;
+		}
 		if (!event.shiftKey && !event.ctrlKey && event.altKey && event.key == 's') {
 			event.preventDefault();
 			toggle_starfield();
+			if (DEBUG.ENABLED) console.log('main.js:on_keydown: Alt+s: toggle starfield');
+			return;
 		}
 		else if (event.shiftKey && !event.ctrlKey && event.altKey && event.key == 'S') {
 			event.preventDefault();
@@ -94,7 +106,13 @@ console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.alt
 			if (!s.classList.contains('hidden')) {
 				update_debug_stats(s);
 			}
+			if (DEBUG.ENABLED) console.log('main.js:on_keydown: Alt+S: toggle debug stats');
+			return;
 		}
+
+		if (DEBUG.KEYBOARD) console.log(
+			'main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.altKey, event.key,
+		);
 	}
 
 	function on_click(event) {
@@ -109,7 +127,10 @@ console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.alt
 		const fs = parseFloat(style.fontSize);
 		const w  = Math.floor(body.offsetWidth  / fs * 100) / 100;
 		const h  = Math.floor(body.offsetHeight / fs * 100) / 100;
-		document.title = `${body.offsetWidth} x ${body.offsetHeight} --> ${w}em x ${h}em`;
+
+		if (DEBUG.ENABLED) {
+			document.title = `${body.offsetWidth} x ${body.offsetHeight} --> ${w}em x ${h}em`;
+		}
 	}
 
 
@@ -118,17 +139,51 @@ console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.alt
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.init = async function() {
-		// Gather elements
-		self.elements = {};
-		Object.entries(parameters.selectors).forEach(([key, selector]) => {
-			if (selector.slice(0, 4) == 'ALL ') {
-				self.elements[key] = document.querySelectorAll(selector.slice(4));
-			} else {
-				self.elements[key] = document.querySelector(selector);
-			}
+		DEBUG.TIMES.MAIN_INIT = Date.now();
+
+		//... Ugly iPhone hack for vertical sliders
+		const is_iphone = navigator.userAgent.includes('iPhone');
+		document.body.classList.toggle('iphone', is_iphone);
+
+		await boot_message('Loading HTML and CSS...');
+
+		DEBUG.TIMES.MAIN_FETCH = Date.now();
+
+		const fetch_files = (`
+			audio_player.html
+			variables.css
+			main.css
+			grids.css
+		`).trim().replace('\t', '').split('\n');
+console.log({ fetch_files });
+		const response = await fetch('audio_player.html');
+		const html     = await response.text();
+		document.body.innerHTML += html;
+
+		if (DEBUG.ENABLED) {
+			console.groupCollapsed('SETTINGS');
+			console.log(JSON.stringify({SETTINGS, DEBUG}, null, '\t'));
+			console.groupEnd();
+			console.groupCollapsed('DEBUG');
+			console.log(JSON.stringify({DEBUG}, null, '\t'));
+			console.groupEnd();
+		}
+
+		DEBUG.TIMES.MAIN_UI = Date.now();
+
+		/// USER INTERFACE ///
+		this.ui = await new UserInterface({
+			SETTINGS, DEBUG,
 		});
 
+		// Gather elements
+		self.elements = self.ui.elements;
+console.log('main.js elements:', self.elements);
+
 		const GETParams = new window.URLSearchParams(window.location.search);
+
+console.log(Object.keys(GETParams));
+
 		const autoplay_index     = (GETParams.get('playsong') || 0) - 1;
 		const load_saved_settings = GETParams.get('reset') === null;
 		document.body.classList.toggle(
@@ -136,10 +191,16 @@ console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.alt
 			GETParams.get('lyrics') == 'right',
 		);
 
-		// LIBRARY
-		self.library = await new MusicLibrary({ testSounds: DEBUG }).catch(wiggleREJECT);
+
+		DEBUG.TIMES.MAIN_LIBRARY = Date.now();
+
+		/// LIBRARY ///
+		self.library = await new MusicLibrary({
+			SETTINGS, DEBUG, testSounds: DEBUG.ENABLED,
+		});
+
 		if (self.library.albums.length > 5) {
-			setCSSVariable('--nr-h-albums', getCSSVariable('--nr-offscreen-albums'));
+			setCSSvar('--nr-h-albums', getCSSvar('--nr-offscreen-albums'));
 		};
 
 		let songs = null;
@@ -161,8 +222,11 @@ console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.alt
 			songs = self.library.songs;
 		}
 
-		// PLAYER
+		DEBUG.TIMES.MAIN_PLAYER = Date.now();
+
+		/// PLAYER ///
 		self.audioPlayer = await new AudioPlayer({
+			SETTINGS, DEBUG,
 			elements   : self.elements,
 			library    : self.library,
 			albums     : self.library.albums,
@@ -176,16 +240,20 @@ console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.alt
 		});
 
 		// Autofocus text input
+	/*
 		const ft = self.elements.filterTerm;
 		ft.focus();
 		ft.setSelectionRange(ft.value.length, ft.value.length);
+	*/
+
+		DEBUG.TIMES.MAIN_LOAD_ALBUMS = Date.now();
+
+		await self.audioPlayer.loadAlbums(self.library.albums);
+
+		DEBUG.TIMES.MAIN_STARFIELD = Date.now();
 
 		if (SHOW_STAR_FIELD) {
-			const reduced_motion = (
-				window.matchMedia('(prefers-reduced-motion: reduce)') === true
-				|| window.matchMedia('(prefers-reduced-motion: reduce)').matches
-			);
-			if (reduced_motion) {
+			if (prefersReducedMotion()) {
 				console.log('User prefers reduced motion, starfield disabled');
 			} else {
 				/*
@@ -198,44 +266,37 @@ console.log('main.js:on_keydown: SCA:', event.shiftKey, event.ctrlKey, event.alt
 				};
 				if (is_fast_machine()) toggle_starfield();
 				*/
-				await toggle_starfield().catch(wiggleREJECT);
+				await toggle_starfield();
 			}
 		}
 
-		if ('wakeLock' in navigator) try {
-			navigator.wakeLock.request();
-			if (DEBUG) console.log('Wakelock success');
-		} catch (e) {
-			console.error('Wakelock failed');
-		}
 
-		//...ugly iPhone hack for vertical sliders
-		const is_iphone = navigator.userAgent.includes('iPhone');
-		document.body.classList.toggle('iphone', is_iphone);
+		DEBUG.TIMES.MAIN_SIMPLE = Date.now();
 
+		// Toggle advanced after load
 		await new Promise(done => {
 			setTimeout(()=>{
-				self.elements.musicPlayer.classList.remove('initializing');
-
 				setTimeout(()=>{
 					//...ugly Make controls smaller, when there is no room
 					//...ugly Canvas size 0 if we start with .simple
 					const scrolls = (document.documentElement.scrollHeight > window.innerHeight);
 					if (scrolls || is_iphone) {
 						//self.elements.musicPlayer.classList.add('simple');
-						self.audioPlayer.toggleAdvancedControls(false);
+						//self.audioPlayer.toggleAdvancedControls(false);
 					}
 				});
 				done();
 			});
 		});
 
-		if (DEBUG) {
+		if (DEBUG.ENABLED) {
 			addEventListener('keydown', on_keydown);
 			addEventListener('click'  , on_click  );
 			addEventListener('resize' , on_resize );
 			on_resize();
 		}
+
+		DEBUG.TIMES.MAIN_INIT_DONE = Date.now();
 	};
 
 

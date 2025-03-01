@@ -1,3 +1,7 @@
+"Analyser" not "Analyzer" (because the Web Audio node is named like so) but Equalizer! (AE preferred)
+grep for comments like //... (Things not yet properly done or polished)
+
+
 BOOT PROCESS
 ============
 index.html   Made to load quickly and show a spash screen. Errors while initializing are shown to the user
@@ -5,16 +9,101 @@ boot.js      Prepares the browser so the actual application can start (Audio aut
 main.js      The actual Earwiggle Music Player
 
 
+FILES
+=====
+index.html
+constants.js                 SETTINGS and DEBUG
+boot.js
+helpers.js
+main.js
+music_library.js
+song_data.js
+audio_player.js
+waveform.js
+graphic_equalizer.js
+spectrum_analyser.js
+scripts/create_thumbnails.sh  Resizes from ../fullsize_covers/* to ../{covers|thumbnails}/*.jpg
+covers/*.jpg                  Shown for the current song (large)
+thumbnails/*.jpg              Used in the album list (small)
+covers/UPLOAD_FILE.png        Manually placed. Watch out when deleting covers or thumbs!
+covers/LOCAL_FILE.png
+thumbnails/UPLOAD_FILE.png
+thumbnails/LOCAL_FILE.png
+fonts/                        Webfonts
+image/                        Icons (eg. player buttons CSS sprite)
+music/                        Music files (mp3, ogg, ...)
+test/                         Noise and sine sweep files (wav, ogg)
+
+
+MODE OF OPERATION
+=================
+
+Timeouts and requestAnimationFrame
+----------------------------------
+When the player is paused, updates are skipped in setTimout loops. Browser consume some CPU still, occasionally.
+timestamp  "High" presicion setTimout(, 10) loop: ontimeupdate only fires ca. 3 times per second
+starfield  Quick'n'dirty addition, <iframe>. I added some pause control to it, requestAnimationFrame loop
+analyser   requestAnimationFrame loop
+waveform   requestAnimationFrame loop
+
+Hardcoded Icons
+---------------
+PNG for items matching [data-trigger] hardcoded to allow floating icons for the Local File album and playlist entries,
+normally, *.jpg is assumed.
+
+
 DEBUG
 =====
- ./?debug  enables console logging and loads test sounds
-grep for comments like //... (Things not yet properly done or polished)
-
-PNG for items matching [data-trigger] hardcoded to allow floating icons
+ENABLE: Call the page with ?debug
+Or run your local server as harald.ist.neu using /etc/hosts, then debug is opt-out and ?debug disables
+- Test sounds added to playlist
+- console.log()s enabled
+- "Global" objects in  window.{PLAYER,EQ,WIGGLE_REJECT}
 
 
 TODO
 ====
+[ ] Lyrics missing in middle layout; Show and move down 100vh, so the user needs to scroll one page down
+[ ] Zoom 2 columns with advanced controls:  Scroll playlist should also scroll page (when from bottom up)
+[?] Albums: Drag instead of mousewheel - what about eq sliders
+[ ] Tab-index: Start at stop button (So user can tab once and start playing)
+[E] show_source.php: Lightmode in <iframe> not working (viator)
+[ ] Dragon's Vow: "... not far from the fight"
+[ ] Upload entry breaks playlist continuation
+[ ] Re-nest player markup, use grid with display:contents
+[E] MYSTERY MARGIN: .controls needs overflow:hidden, or it adds horizontal margin to the player, when small layout
+[ ] EQ: Shift+Right click = reset all
+[\] Loop Song: Only auto-skip, buttons allow next song
+[ ] Player Phone Mode: Main controls fixed to top
+[ ] Waveform click: Modes (oscillogram, animated, 5 zoom steps)
+[ ] <picture> multiple resols, update the script
+[!] Dict visibilities for sections
+[E] data-trigger="undefined" (found in inspector)
+[ ] Playlist manager: skip upload/triggers
+[ ] iframe.starfield: fade in correctly when new song starts, manage fading
+[ ] Albums: Drag with mouse-scroll
+[E] Middle click does not reaset EQ
+[ ] Click on playing song in playlist: pause/resume
+[ ] toggle lyrics via class, remove <h2>Lyrics</h2> when none
+[ ] Now Playing + Cover + Comment: min 100vh
+[ ] Hide lowest row in .controls when .simple
+[ ] <a> colors same as bootscreen colors
+[!] Need to click Stop to halt animations on start, should be able to start disabled and toggle willingly,
+    same as rAF updates with uninitialized canvases, sound should reconnect anytime
+[!] Filter: "artist:Hjalvandar"
+[!] Waveform: Cache waves (RAM)
+
+[?] Button and inputs make sound
+[ ] Fade on play/seek/skip
+[ ] Move CSS vars from :root to .audio_player
+[ ] Scales for volume slider (soft, mid, loud)
+[ ] Pause on inactivity: (Option) Halt everything when not in focus
+[ ] Filter: Buttons Filter, All Songs illuminated
+[ ] Check all property introducers (this.thing; below const self = this)
+[ ] Global rAF manager: Checks visibility before calling registered render functions
+[ ] Global rAF manager: is_canvas_sized
+[ ] span.timestamp -> <time>
+[#] Get rid of WIGGLE_REJECT
 [ ] body.initializing - not going away - providing text-align:Center to albums
 [ ] Extra padding/margin for focus outline creates issues
 [ ] Move variables to .audio_player (keep them private to us), rename --player-* (--player-items too specific)
@@ -34,7 +123,7 @@ TODO
 [E] Albumlist/Playlist: Album selected with playing song needs to select the song
 [E] Pause while Stopped
 [#] Playlist progresses, "clicks" album (focus for 200ms) without changing filter results
-[#] Enter "clicks" item
+[#] Enter "clicks" items, analyser; Cursor keys for seek on waveform (tabindex)
 [ ] Cursor keys unused axis: focus next element, or change grid section (album <-> filter <-> playlist
 [*] Filter also selects/focuses album
 [*] Current album:brighter/thicker border
@@ -44,8 +133,6 @@ TODO
 [ ] MusicLibrary: Refactor to work better once a backend exists (Update playlist)
 [!] Playlist: Duration, Genre
 [ ] Playlist: Custom playlists
-[!] Filter: "artist:Hjalvandar"
-[!] Waveform: Cache waves (RAM)
 [?] Waveform: Render wave progressively, as the data comes in
 [?] Filter: multiple terms, comma separated
 [ ] Loop/play by selecting playlist items (checkbox)

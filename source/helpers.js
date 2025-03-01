@@ -3,6 +3,8 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+export const GETParams = new window.URLSearchParams(window.location.search);
+
 export function is_set (variable) {
 	return (typeof variable != 'undefined');
 
@@ -64,8 +66,8 @@ export function newElement(definition) {
 	return newElement;
 }
 
-export const getCSSVariable = (name) => getComputedStyle(document.documentElement).getPropertyValue(name);
-export const setCSSVariable = (name, value) => document.documentElement.style.setProperty(name, value);
+export const getCSSvar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name);
+export const setCSSvar = (name, value) => document.documentElement.style.setProperty(name, value);
 
 export function triggerDownload(content, filename, mimeType = 'application/octet-stream') {
 	const blob = new Blob([content], { type: 'application/octet-stream' });
@@ -104,6 +106,12 @@ export function extensionJpg(filename) {
 
 
 
+export function prefersReducedMotion() {
+	return false && (
+		window.matchMedia('(prefers-reduced-motion: reduce)') === true
+		|| window.matchMedia('(prefers-reduced-motion: reduce)').matches
+	);
+}
 
 export function isMobileDevice() {
 	//... Not reliable. Let's hope we get a real API for this in the future
@@ -117,6 +125,33 @@ export function isSafari() {
 	return (
 		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 	);
+}
+
+let wake_lock = null;
+export async function wakeLock(enable = null) {
+	if (enable === null) enable = !wake_lock;
+
+	const method    = enable ? 'request' : 'release';
+	const parameter = enable ? undefined : wake_lock;
+
+	if ('wakeLock' in navigator) try {
+		if (enable) {
+			wake_lock = navigator.wakeLock.request();
+			document.body.classList.add('wake_lock');
+		} else {
+			wake_lock.then(wl => wl.release());
+			wake_lock = null;
+			document.body.classList.remove('wake_lock');
+		}
+	} catch (error) {
+		console.log('%cwakeLock failed:', 'color:red', method, error);
+		wake_lock = null;
+		console.error('Wakelock failed ' + method);
+		document.body.classList.remove('wake_lock');
+	}
+
+	document.body.classList.toggle('wake_lock', wake_lock && !wake_lock?.released);
+	console.log('wakeLock:', wake_lock);
 }
 
 //EOF

@@ -3,109 +3,108 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { DEBUG } from './main.js';
-import { clamp, newElement, getCSSVariable, format_time } from './helpers.js';
+import { clamp, newElement, getCSSvar, format_time, prefersReducedMotion } from './helpers.js';
 
 const HOLLOW_INDICATOR = false;
 
-export function Waveform(audioContext, audioElement, canvas) {
+export const waveformCache = new function() {
 	const self = this;
 
-	this.abortController;
+	this.waveforms = {};
 
-	this.canvasContext;
+	this.add = (key, w) => self.waveforms[key] = w;
+	this.remove = (w) => self.waveforms[w] && delete self.waveforms[w];
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// STATIC
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+let WAVE_CACHE = {};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// OBJECT TEMPLATE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+export const Waveform = function(parameters) {
+	const self = this;
+
+	const { SETTINGS, DEBUG } = parameters;
+	const { audioContext, audioElement, canvas } = parameters;
+
+	let ctx = null;   // Canvas 2d context
+
+	this.abortController;
+	this.idleTimeout;
 
 	this.rendering;
-	this.cachedCanvas;
 	this.hollowIndicator;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// PROGRESS INDICATOR
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.saveCanvas = function() {
-		const ctx = self.canvasContext;
-		self.cachedCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
-	}
-
-	this.restoreCanvas = function() {
-		const ctx = self.canvasContext;
-		ctx.putImageData(self.cachedCanvas, 0, 0);
-	}
-
-
-	this.showProgress = function(ratio) {
-		//...if (!canvas.checkVisibility()) return;
-
-		self.restoreCanvas();
-		const x = Math.floor((canvas.width - 1) * ratio);
-		const h = canvas.height;
-		const ctx = self.canvasContext;
-
-		if (self.hollowIndicator) {
-			self.canvasContext.fillStyle = getCSSVariable('--waveform-progress-shadow');
-			self.canvasContext.fillRect(x-3, 0, 2, h);
-			self.canvasContext.fillRect(x+2, 0, 2, h);
-
-			self.canvasContext.fillStyle = getCSSVariable('--waveform-progress-color');
-			self.canvasContext.fillRect(x-2, 2, 1, h-4);
-			self.canvasContext.fillRect(x+2, 2, 1, h-4);
-
-			self.canvasContext.fillRect(x-1,   1, 1, 1);
-			self.canvasContext.fillRect(x+1,   1, 1, 1);
-			self.canvasContext.fillRect(x-1, h-2, 1, 1);
-			self.canvasContext.fillRect(x+1, h-2, 1, 1);
-
-			self.canvasContext.fillRect(x,   0, 1, 1);
-			self.canvasContext.fillRect(x, h-1, 1, 1);
-		} else {
-			self.canvasContext.fillStyle = getCSSVariable('--waveform-progress-shadow');
-			self.canvasContext.fillRect(x-3, 0, 1, h);
-			self.canvasContext.fillRect(x+3, 0, 1, h);
-
-			self.canvasContext.fillStyle = getCSSVariable('--waveform-progress-color');
-			self.canvasContext.fillRect(x-1, 0, 1, h);
-			self.canvasContext.fillRect(x+1, 0, 1, h);
-
-			self.canvasContext.fillRect(x-3, 0, 1, 1.5);
-			self.canvasContext.fillRect(x-2, 0, 1, 3  );
-			self.canvasContext.fillRect(x+2, 0, 1, 3  );
-			self.canvasContext.fillRect(x+3, 0, 1, 1.5);
-
-			self.canvasContext.fillRect(x-3, h-1.5, 1, 1.5);
-			self.canvasContext.fillRect(x-2, h-3  , 1, 3  );
-			self.canvasContext.fillRect(x+2, h-3  , 1, 3  );
-			self.canvasContext.fillRect(x+3, h-1.5, 1, 1.5);
-		}
-	}
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // RENDER
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.reset = function() {
-		const ctx = self.canvasContext;
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	this.maxX;
+	this.maxY;
+	this.canvasToCache = function() {
+		if (DEBUG.WAVE_FORM) console.log('save: WAVE_CACHE:', key, WAVE_CACHE[key], WAVE_CACHE);
 
-		ctx.fillStyle = getCSSVariable('--waveform-empty-color-1');
+		if (!ctx) return;
+
+		const key = audioElement.src;
+		if (key) WAVE_CACHE[key] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	}
+
+	this.canvasFromCache = function() {
+		if (DEBUG.WAVE_FORM) console.log('load: WAVE_CACHE:', key, WAVE_CACHE[key], WAVE_CACHE);
+
+		if (!ctx) return;
+
+		const key = audioElement.src;
+		if (key && WAVE_CACHE[key]) ctx.putImageData(WAVE_CACHE[key], 0, 0);
+
+	}
+
+	this.reset = function() {
+		//...if (!canvas.checkVisibility()) return;
+		if (!ctx) return;
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		const bg_color = getCSSvar('--waveform-bg');
+		if (bg_color) {
+			ctx.fillStyle = bg_color;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+		}
+
+		ctx.fillStyle = getCSSvar('--waveform-empty-color-1');
 		ctx.fillRect(0, Math.floor(canvas.height / 2), canvas.width, 1);
 
 		const midY = canvas.height / 2;
-		ctx.fillStyle = getCSSVariable('--waveform-empty-color-1');
-		const y = (x, f) => Math.sin(x / canvas.width * Math.PI * f) * midY * 0.8;
+		ctx.fillStyle = getCSSvar('--waveform-empty-color-1');
+
+		self.animatedEmptyWave = true;
+		const animated = (self.animatedEmptyWave) ? 1 : 0;
+		const tf1 = Math.PI;
+		const tf2 = -1;
+		const t1 = animated * (Date.now() % (2000*tf1) - tf1*1000) / (tf1*1000) * Math.PI;
+		const t2 = animated * (Date.now() % (2000*tf2) - tf2*1000) / (tf2*1000) * Math.PI;
+
+		const f1 = (x, f) => Math.sin(x / canvas.width * Math.PI * f - t1) * midY * 0.8;
+		const f2 = (x, f) => Math.sin(x / canvas.width * Math.PI * f - t2) * midY * 0.8;
 		for (let x = 0; x < canvas.width; x++) {
-			const y0 = y(x, 4); ctx.fillRect(x, midY-y0, 1, 2*y0);
-			const y1 = y(x, 7); ctx.fillRect(x, midY-y1, 1, 2*y1);
+			const y0 = f1(x, 4); ctx.fillRect(x, midY-y0, 1, 2*y0);
+			const y1 = f2(x, 7); ctx.fillRect(x, midY-y1, 1, 2*y1);
 		}
 
-		self.saveCanvas();
-		self.showProgress(0);
+		//...self.showProgress(0);
 	}
 
 	this.showError = function() {
-		const ctx = self.canvasContext;
+		self.idleTimeout = false;   // Stop rAF loop
+
+		//...if (!canvas.checkVisibility()) return;
+		if (!ctx) return;
+
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 		const midX = Math.floor(canvas.width / 2);
@@ -121,34 +120,57 @@ export function Waveform(audioContext, audioElement, canvas) {
 		ctx.fillText('?', midX, midY);
 	}
 
-	this.render = async function() {
-		if (self.abortController) {
-			// User skipped to another song while we were loading
-			if (DEBUG) console.log('Waveform aborting fetch:', audioElement.src);
-			self.abortController.abort();
+	this.render = async function(event) {
+		//...if (!canvas.checkVisibility()) return;
+		if (!ctx) return;
+
+		if (WAVE_CACHE[event.target.src]) {
+			self.canvasFromCache();
+			return;
 		}
 
+		if (self.abortController) {
+			// User skipped to another song while we were loading
+			if (DEBUG.ENABLED) console.log('Waveform aborting fetch:', audioElement.src);
+			self.abortController.abort();
+			self.idleTimeout = false;   // Stop rAF loop
+		}
+
+		if (!self.idleTimeout && !prefersReducedMotion()) {
+			function on_idle() {
+				if (self.idleTimeout) requestAnimationFrame(on_idle);
+				if (self.animatedEmptyWave) {
+					self.reset();
+					const ratio = audioElement.currentTime / audioElement.duration;
+					if (ratio) self.showProgress(ratio);
+				}
+			}
+			self.idleTimeout = requestAnimationFrame(on_idle);   // Start rAF loop
+		}
 		self.abortController = new AbortController();
 		let response = null;
-		try {
-			if (DEBUG) console.log('Waveform re-fetching:', audioElement.src);
 
+		try {
+			if (DEBUG.ENABLED) console.log('Waveform:', decodeURIComponent(audioElement.src.split('/').pop()));
+
+			// Retreive MP3
 			response = await fetch(
 				audioElement.src,
 				{ signal: self.abortController.signal },
-			).catch(wiggleREJECT);
+			);
 
-			if (DEBUG) console.log('Waveform response:', response);
+			if (DEBUG.ENABLED) console.log('Waveform response:', response);
+			self.abortController = null;
 		}
 		catch (e) {
 			console.error(`Error while fetching ${audioElement.src}`);
+			console.log(error);
 			self.abortController = null;
 			return;
 		}
-		self.abortController = null;
 
-		const audioData = await response.arrayBuffer().catch(wiggleREJECT);
-		const buffer    = await audioContext.decodeAudioData(audioData).catch(wiggleREJECT);
+		const audioData = await response.arrayBuffer();
+		const buffer    = await audioContext.decodeAudioData(audioData);
 
 		const is_stereo = buffer.numberOfChannels >= 2;
 		if (buffer.numberOfChannels > 2 || buffer.numberOfChannels < 1) console.error(
@@ -158,91 +180,161 @@ export function Waveform(audioContext, audioElement, canvas) {
 		const leftChannel  = buffer.getChannelData(0);
 		const rightChannel = buffer.getChannelData(is_stereo ? 1 : 0);
 
-		const maxX  = canvas.width;
-		const midY  = Math.floor(canvas.height / 2);
+		const maxX = canvas.width;
+		const midY = Math.floor(canvas.height / 2);
 
-		const samplesPerPixel = buffer.length / maxX;
+		const samples_per_pixel = buffer.length / maxX;
 
-		const ctx = self.canvasContext;
+		// Clear canvas
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		const bg_color = getCSSvar('--waveform-bg');
+		if (bg_color) {
+			ctx.fillStyle = bg_color;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+		}
 
-		const left_color_max  = getCSSVariable('--waveform-left-color-max');
-		const left_color_avg  = getCSSVariable('--waveform-left-color-avg');
-		const right_color_max = getCSSVariable('--waveform-right-color-max');
-		const right_color_avg = getCSSVariable('--waveform-right-color-avg');
+		const left_color_max  = getCSSvar('--waveform-left-color-max');
+		const left_color_avg  = getCSSvar('--waveform-left-color-avg');
+		const right_color_max = getCSSvar('--waveform-right-color-max');
+		const right_color_avg = getCSSvar('--waveform-right-color-avg');
+
+		const stroke_width = 1;
 
 		let last_update_time = Date.now();
 		for (let x = 0; x < maxX; x++) {
-			const tOffset = Math.floor(x * samplesPerPixel);
+			const tOffset = Math.floor(x * samples_per_pixel);
 
-			let sumLeft = 0;
-			let sumRight = 0;
-			let maxLeft = 0;
-			let maxRight = 0;
-			for (let t = 0; t < samplesPerPixel; t++) {
+			let  sum_left = 0;
+			let sum_right = 0;
+			let  max_left = 0;
+			let max_right = 0;
+			for (let t = 0; t < samples_per_pixel; t++) {
 				const i = tOffset + t;
 				const left  = Math.abs(leftChannel[i]);
 				const right = Math.abs(rightChannel[i])
-				if (left  > maxLeft ) maxLeft  = left;
-				if (right > maxRight) maxRight = right;
-				sumLeft  += left;
-				sumRight += right;
-			}
-			const yMaxLeft  = maxLeft  * midY;
-			const yMaxRight = maxRight * midY;
-			ctx.fillStyle = is_stereo ? left_color_max : right_color_max;
-			ctx.fillRect(x, midY - yMaxLeft, 1, yMaxLeft);
-			ctx.fillStyle = right_color_max;
-			ctx.fillRect(x, midY, 1, yMaxRight);
 
-			const yAvgLeft  = sumLeft  / samplesPerPixel * midY * 3;
-			const yAvgRight = sumRight / samplesPerPixel * midY * 3;
-			ctx.fillStyle = is_stereo ? left_color_avg : right_color_avg;
-			ctx.fillRect(x, midY - yAvgLeft, 1, yAvgLeft);
-			ctx.fillStyle = right_color_avg;
-			ctx.fillRect(x, midY, 1, yAvgRight);
+				if (left  > max_left ) max_left  = left;
+				if (right > max_right) max_right = right;
 
-			/*//... self.rendering logic missing
-			const elapsed_ms = Date.now() - last_update_time;
-			if (elapsed_ms > 20) {
-				await new Promise(done => setTimeout(done, 100));
-				last_update_time = Date.now();
+				sum_left  += left;
+				sum_right += right;
 			}
-			*/
+			const  left_max_y = max_left  * midY;
+			const right_max_y = max_right * midY;
+
+			const  left_avg_y = sum_left  / samples_per_pixel * midY * 3;
+			const right_avg_y = sum_right / samples_per_pixel * midY * 3;
+
+			function fill(color, x0, y0, w, h) {
+				ctx.fillStyle = color;
+				ctx.fillRect(x0, y0, w, h);
+			}
+			fill( left_color_max, x, midY-left_max_y, stroke_width, left_max_y);  // top left_max
+			fill( left_color_avg, x, midY-left_avg_y, stroke_width, left_avg_y);  // top left avg
+			fill(right_color_max, x, midY, stroke_width, right_max_y);            // btm right_max
+			fill(right_color_avg, x, midY, stroke_width, right_avg_y);            // btm right_avg
 		}
 
-		self.saveCanvas();
+		console.log(event);
+		self.canvasToCache();
 	}
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// PROGRESS INDICATOR
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.showProgress = function(ratio) {
+		//...if (!canvas.checkVisibility()) return;
+		if (!ctx) return;
+
+		const src = WAVE_CACHE[audioElement.src];
+		if (src) self.idleTimeout = false;   // Stop rAF loop
+
+		self.canvasFromCache(src);
+		const x = Math.floor((canvas.width - 1) * ratio);
+		const h = canvas.height;		//if (self.animatedEmptyWave) self.reset();
+
+		if (self.hollowIndicator) {
+			ctx.fillStyle = getCSSvar('--waveform-progress-shadow');
+			ctx.fillRect(x-3, 0, 2, h);
+			ctx.fillRect(x+2, 0, 2, h);
+
+			ctx.fillStyle = getCSSvar('--waveform-progress-color');
+			ctx.fillRect(x-2, 2, 1, h-4);
+			ctx.fillRect(x+2, 2, 1, h-4);
+
+			ctx.fillRect(x-1,   1, 1, 1);
+			ctx.fillRect(x+1,   1, 1, 1);
+			ctx.fillRect(x-1, h-2, 1, 1);
+			ctx.fillRect(x+1, h-2, 1, 1);
+
+			ctx.fillRect(x,   0, 1, 1);
+			ctx.fillRect(x, h-1, 1, 1);
+		} else {
+			ctx.fillStyle = getCSSvar('--waveform-progress-shadow');
+			ctx.fillRect(x-3, 0, 6, h);
+
+			ctx.fillStyle = getCSSvar('--waveform-progress-color');
+			ctx.fillRect(x-2, 2, 1, h-4);
+			ctx.fillRect(x+2, 2, 1, h-4);
+
+			ctx.fillRect(x-3, 0, 1, 1.5);
+			ctx.fillRect(x-2, 1, 1, 2  );
+			ctx.fillRect(x+2, 1, 1, 2  );
+			ctx.fillRect(x+3, 0, 1, 1.5);
+
+			ctx.fillRect(x-3, h-1.5, 1, 1.5);
+			ctx.fillRect(x-2, h-3  , 1, 2  );
+			ctx.fillRect(x+2, h-3  , 1, 2  );
+			ctx.fillRect(x+3, h-1.5, 1, 1.5);
+		}
+	}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function() {
+		self.idleTimeout = false;
 	}
 
 	this.init = async function() {
-		self.cachedCanvas = null;
-		self.rendering    = false;
+		self.rendering   = false;
+		self.idleTimeout = null;   // No initial rAF loop
 
-console.group('Waveform.init');
-console.log(canvas.width, canvas.offsetWidth);
-console.log(canvas.height, canvas.offsetHeight);
-console.groupEnd();
+		requestAnimationFrame(()=>{
+			if (DEBUG.WAVEFORM) {
+				console.group('Waveform.init');
+				console.log(canvas.width, canvas.offsetWidth);
+				console.log(canvas.height, canvas.offsetHeight);
+				console.groupEnd();
+			}
 
-		canvas.width  = canvas.offsetWidth;
-		canvas.height = canvas.offsetHeight;
+			if (canvas.checkVisibility()) {
+				canvas.width  = canvas.offsetWidth;
+				canvas.height = canvas.offsetHeight;
+			}
 
-		// Lying to the browser about willReadFrequently to make it shut up
-		self.canvasContext = canvas.getContext('2d', { willReadFrequently: !true });
-		//... Not required for fillRect: self.canvasContext.translate(0.5, 0.5);
+			try {
+				ctx = canvas.getContext('2d', {
+					willReadFrequently : !true,   //... We dont, but the browser complains
+				});
+				//... Not required for fillRect: ctx.translate(0.5, 0.5);s
 
-		self.hollowIndicator = false;
-		self.reset();
-		self.showProgress(0);
+				if (DEBUG.WAVE_FORM) console.log(
+					'waveform: globalAlpha:', ctx.globalAlpha,
+				);
+			}
+			catch (error) {
+				console.error('Trying to inizialize Waveform canvas failed');
+			}
 
-		audioElement.addEventListener('canplaythrough', this.render);
+			self.hollowIndicator = false;
+			self.reset();
+			self.showProgress(0);
+
+			audioElement.addEventListener('canplaythrough', this.render);
+		});
 	}
 
 	return self.init().then(() => self);   // const waveform = await new Waveform();

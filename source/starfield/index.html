@@ -1,0 +1,114 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Star Field</title>
+<style>
+html, body {
+	margin:0; padding:0; height:100%;
+	overflow:hidden; /* Helps with preventing scrollbars showing briefly while resizing */
+}
+</style><script>
+addEventListener( 'load', ()=>{
+	const NR_STARS   = 1000;
+	const BASE_SPEED = 0.15;     // 1 = travels one screen size (actually half of that) per second
+	const EPSILON    = 1/1;   // Distance from center for recycled stars. Avoiding division by zero.
+
+	const canvas = document.querySelector('canvas');
+	const context = canvas.getContext('2d');
+	const stars = create_stars();
+
+	let running = true;
+	// We could add a "stop" option which sets this to false.
+	// Useful if you might have to de-instantiate the whole thing
+
+	let mid_x, mid_y;
+
+	let paused = new window.URLSearchParams(window.location.search).get('paused') !== null;
+
+	window.addEventListener( 'message', (event)=>{
+		if (event.data == 'pause') paused = true;
+		if (event.data == 'continue') paused = false;
+	});
+
+	addEventListener( 'resize', on_resize );
+	on_resize();   // Set initial size
+	start_render_loop();
+	return;
+
+	function on_resize () {
+		const new_width = document.body.clientWidth;
+		const new_height = document.body.clientHeight;
+		canvas.setAttribute( 'width', canvas.width = new_width );
+		canvas.setAttribute( 'height', canvas.height = new_height );
+		mid_x = new_width / 2;
+		mid_y = new_height / 2;
+	}
+
+	function start_render_loop () {
+		let last_time = null;
+		loop();
+
+		function loop (current_time = null) {
+			let elapsed_ms;
+
+			if (current_time === null) {
+				elapsed_ms = 0;
+			} else {
+				elapsed_ms = current_time - last_time;
+			}
+			last_time = current_time;
+
+			if (!paused) {
+				advance_world( elapsed_ms / 1000 );
+				render_frame();
+			}
+			if (running) requestAnimationFrame( loop );
+		}
+	}
+
+	function create_stars () {
+		const new_stars = [];
+		for (let i = 0; i < NR_STARS; ++i) new_stars.push({
+			x: 2*Math.random() - 1,   // Nomralized coords go from -1 to +1
+			y: 2*Math.random() - 1,
+		});
+		return new_stars;
+	}
+
+	function advance_world (elapsed_seconds) {
+		const f = 180;
+		const t = (Date.now() % f) / f * Math.PI*2;
+		stars.forEach( star =>{
+			// Velocity dependent on distance to center, the farther out, the faster
+			const d = Math.sqrt( star.x*star.x + star.y*star.y );
+			const v = d * BASE_SPEED * elapsed_seconds;
+
+			const normalized_x = star.x / d;   // Unit vector
+			const normalized_y = star.y / d;
+
+			star.x += normalized_x * v;        // Move star
+			star.y += normalized_y * v;
+
+			if ((Math.abs(star.x) > 1) && (Math.abs(star.y) > 1)) {
+				star.x = (Math.random() - 0.5) * EPSILON;
+				star.y = (Math.random() - 0.5) * EPSILON;
+			}
+		});
+	}
+
+	function render_frame () {
+		context.fillStyle = '#0001';
+		context.fillRect( 0, 0, canvas.width, canvas.height );
+		context.fillStyle = '#fff';
+		const f_now = 500;
+		stars.forEach((star, index) =>{
+			const d = Math.sqrt(star.x*star.x + star.y*star.y);
+			const luminosity = '456789abcdef'.charAt( Math.floor(d*12) );
+			context.fillStyle = '#' + luminosity + '' + luminosity + '' + luminosity;
+			const x = mid_x + star.x * mid_x;
+			const y = mid_y + star.y * mid_y;
+			const hue = (index % 360) + (Date.now() % f_now)*360/f_now;
+			context.fillStyle = `hsl(${hue}deg 100% 75%)`;
+			context.fillRect( x, y, 1, 1 );   // This is faster than it looks
+		});
+	}
+});
+</script></head><body><canvas></canvas></body></html>

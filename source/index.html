@@ -8,95 +8,67 @@
 <link rel="help" href="README">
 <link rel="icon" href="image/earwiggle_icon.png" type="image/png">
 <link rel="preload" href="image/earwiggle_icon.png" as="image">
-<link rel="stylesheet" href="main.css" type="text/css">
-<script type="module" src="boot.js" async></script>
-<style class="noscript">
-
-	html, body { height:100%; margin:0; }
-	body.initializing { display:flex; align-items:center; justify-content:center; text-align:center; background:#000; color:#fff; }
-	body.initializing > :not(.noscript) { position:absolute; left:-999999px; }
-	.noscript img { animation:LOADING 2.5s infinite; }
-	.noscript strong { display:block; color:#f00; font-size:1.2em; margin-bottom:0.5rem; }
-	@keyframes LOADING {
-		0%   { transform:scaleX( 1) scaleY( 1); }
-		25%  { transform:scaleX( 1) scaleY(-1); }
-		50%  { transform:scaleX(-1) scaleY(-1); }
-		75%  { transform:scaleX(-1) scaleY( 1); }
-	}
-
-</style><style>
+<link rel="stylesheet" href="variables.css"      type="text/css">
+<link rel="stylesheet" href="main.css"           type="text/css">
+<link rel="stylesheet" href="audio_player.css"   type="text/css">
+<link rel="stylesheet" href="custom_inputs.css"  type="text/css">
+<style>
 
 	.hidden { display:none !important; }
 
-</style></head><body class="initializing custom_range_inputs">
+</style><style class="noscript">
+
+	* { margin:0; padding:0; }
+	html, body { height:100%; width:100%; background:#000; color:#ffe; }
+	body > :not(.noscript) { position:absolute; left:-999999px; }
+	div.noscript { display:grid; place-content:center; position:absolute; top:0; left:0; width:100dvw; height:100dvh; }
+	div.noscript > * { margin:0.5em auto 0; text-align:center; line-height:1.3; }
+	div.noscript a:focus { outline:none; background:#040; }
+	.noscript strong { display:block; color:#f00; font-size:1.2em; margin-bottom:0.5rem; }
+	.noscript img {
+		border-radius:50%; margin-bottom:1em; padding:1px 2px 2px;
+		--c:#f008; box-shadow:0 0 0 4px var(--c); animation:LOADING 2.66s infinite;
+	}
+	.noscript pre { font-size:0.82em; }
+	@keyframes LOADING {
+		0%   { transform:translate(0, 0    ) scaleX( 1) scaleY(  1 ); --c:#ddbb33; }
+		25%  { transform:translate(0, 0.2em) scaleX(-1) scaleY(0.9 ); --c:#44bb48; }
+		50%  { transform:translate(0,-0.1em) scaleX( 1) scaleY(1.08); --c:#0088dd; }
+		75%  { transform:translate(0, 0.2em) scaleX(-1) scaleY(0.9 ); --c:#dd58aa; }
+		100% { transform:translate(0, 0    ) scaleX( 1) scaleY(  1 ); --c:#ddbb33; }
+	}
+	iframe {
+		display:block; width:100vw; max-width:80em; border:none; margin:1em 0 0;
+		height:min(max(calc(100vh - 20rem), calc(17px * 5)), calc(17px * 45));
+	}
+
+
+</style><script class="noscript">
+
+	window.WIGGLE_INDEX_TIME = Date.now();
+
+</script><?php /*<script class="noscript">
+
+	addEventListener('load', ()=>{
+		document.querySelector('.noscript p').innerText = 'Loading...';
+		const script = document.createElement('script'); script.type = 'module'; script.src = 'boot.js';
+		document.head.append(script);
+		console.log('<<%c BOOTING %c>>', 'color:red', 'color:unset');
+	});
+
+</script>*/?><script src="boot.js" type="module"></script></head><body class="Xbooting custom_range_inputs">
 
 	<div class="noscript">
 		<img src="image/earwiggle_icon.png" width="64" height="64" alt="Earwiggle Icon">
 		<h1>Earwiggle</h1>
 		<p>Please enable JavaScript</p>
 	</div>
-	<script class="noscript">document.querySelector('.noscript p').innerText = 'Loading...';</script>
-
-	<section class="Xsimple initializing audio_player">
-		<ul class="album_list" Xtabindex="0"></ul>
-		<form class="filter">
-			<input name="filter_text" type="text" placeholder="Artist, album, title">
-			<button name="filter_apply">Filter</button>
-			<button name="filter_clear">All Songs</button>
-		</form>
-		<ol class="playlist" Xtabindex="0"></ol>
-		<div class="now_playing">
-			<h2>
-				<span class="artist">Earwiggle</span>
-				<span class="album"></span>
-				<span class="song">Music Player</span>
-			</h2>
-		</div>
-		<div class="album_cover">
-			<a href="covers/earwiggle_music_player.jpg" target="_blank">
-				<img src="covers/earwiggle_music_player.jpg" alt="Album cover">
-			</a>
-			<p class="comments"><b>Eardrums not included</b></p>
-		</div>
-		<div class="controls">
-			<button name="back"      class="audio_track_back" title="Skip to previous song">Back</button>
-			<button name="stop"      class="audio_stop"       title="Stop playing">Stop</button>
-			<button name="play"      class="audio_play"       title="Play/pause">Play</button>
-			<button name="pause"     class="audio_pause"      title="Pause playback">Pause</button>
-			<button name="next"      class="audio_track_next" title="Skip to next song">Next</button>
-			<button name="loop_song" class="audio_loop_song"  title="Loop song">Loop Song</button>
-			<button name="loop_list" class="audio_loop_list"  title="Loop playlist">Loop Playlist</button>
-			<input name="volume"   type="range" min="0" max="1" step="any" value="0.25" title="Volume">
-			<button name="import"    class="audio_eject"      title="Play your own music">Import Songs</button>
-			<button name="config"    class="audio_config"     title="Toggle starfield animation">Configuration</button>
-			<button name="settings"  class="audio_tuning"     title="Advanced Controls">Waveform, EQ, Analyser</button>
-			<input name="progress" type="range" min="0" max="1" step="any" value="0" title="Progress/Seek">
-			<span class="timestamp">00:00:00.0</span>
-		</div>
-		<canvas class="waveform"></canvas>
-		<div class="equalizer">
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-			<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
-		</div>
-		<canvas class="analyser"></canvas>
-		<pre class="lyrics"></pre>
-	</section>
-
+	<script class="noscript"> document.querySelector('.noscript p').innerText = 'Initializing...' </script>
 	<div class="hidden">
 		<button accesskey="d" onclick="location.href='?debug'">Debug mode, test sounds</button>
 		<button accesskey="r" onclick="location.href='?reset'">Clear localStorage</button>
+		<button accesskey="l" onclick="document.body.classList.toggle('light')">Light Mode</button>
 		<button accesskey="q" onclick="window.open('/tools/qrcode/show.php?text=' + location.href)">QR link to this page</button>
 	</div>
-	<pre class="hidden debug_stats"></pre>
 
 </body></html>

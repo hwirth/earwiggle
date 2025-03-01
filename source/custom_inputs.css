@@ -1,0 +1,137 @@
+/* CUSTOM ELEMENT STYLES */
+
+/* Scroll bars */
+
+* { scrollbar-color:var(--scrollbar-color) var(--scrollbar-bg); }
+X::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background-color: var(--scrollbar-bg); }
+::-webkit-scrollbar-thumb { background-color: var(--scrollbar-color); }
+::-webkit-scrollbar-button {
+	color:#ffe;
+	background-color: var(--scrollbar-button-color);
+	Xwidth:5px; Xheight:5px;
+}
+::-webkit-scrollbar-button::before,
+::-webkit-scrollbar-button::after { color:#fff; }
+
+
+/* Range input */
+
+.custom_range_inputs input[type=range] {
+	--input-range-background          : transparent;
+	--input-range-width               : inherit;
+	--input-range-height              : unset;
+
+	--input-range-track-background    : #606058;
+	--input-range-track-height        : 19px;
+	--input-range-track-width         : 9px;
+	--input-range-track-border-radius : var(--border-radius-small);
+
+	--input-range-thumb-width         : 12px;
+	--input-range-thumb-height        : 19px;
+	--input-range-thumb-background    : #aa9;
+	--input-range-thumb-focus-bg      : #ffe;
+	--input-range-thumb-border        : solid 1px #aa98;
+	--input-range-thumb-border-radius : 3px;
+	--input-range-thumb-shadow        : 0 0 2px 1px #000;
+	--Xinput-range-thumb-shadow       : none;
+
+	--input-range-thumb-margin-top    : 0px;
+	--input-range-thumb-margin-left   : 0px;
+
+	--equalizer-opacity : 0.35;
+}
+
+.custom_range_inputs input[type=range] {
+	appearance : none;
+	display    : inline-block;
+	width      : var(--input-range-width);
+	height     : var(--input-range-height);
+	background : var(--input-range-background);
+	border-radius : var(--input-range-track-border-radius); overflow:hidden;
+}
+
+.custom_range_inputs input[type=range]::-moz-range-track {
+	width         : 100%;
+	height        : var(--input-range-track-height);
+	background    : var(--input-range-track-background);
+	border-radius : var(--input-range-track-border-radius);
+	overflow:hidden;
+}
+.custom_range_inputs input[type=range]::-webkit-slider-runnable-track {
+	width         : 100%;
+	height        : var(--input-range-track-height);
+	background    : var(--input-range-track-background);
+	border-radius : var(--input-range-track-border-radius);
+	Xcursor:pointer; overflow:hidden;
+}
+
+.custom_range_inputs input[type=range]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	height        : var(--input-range-thumb-height);
+	width         : var(--input-range-thumb-width);
+	margin-top    : var(--input-range-thumb-margin-top);
+	border        : var(--input-range-thumb-border);
+	border-radius : var(--input-range-thumb-border-radius);
+	background    : var(--input-range-thumb-background);
+	box-shadow    : var(--input-range-thumb-shadow);
+	Xcursor:pointer;
+}
+.custom_range_inputs input[type=range]::-moz-range-thumb {
+	height        : var(--input-range-thumb-height);
+	width         : var(--input-range-thumb-width);
+	margin-top    : var(--input-range-thumb-margin-top);
+	border        : var(--input-range-thumb-border);
+	border-radius : var(--input-range-thumb-border-radius);
+	background    : var(--input-range-thumb-background);
+	box-shadow    : var(--input-range-thumb-shadow);
+	Xcursor:pointer;
+}
+
+.custom_range_inputs input[type=range]:focus {
+	box-shadow:none; outline:none;
+}
+.custom_range_inputs input[type=range]:focus::-moz-range-thumb {
+	background : var(--input-range-thumb-focus-bg);
+	box-shadow : var(--focus-input-shadow);
+}
+.custom_range_inputs input[type=range]:focus::-webkit-slider-thumb {
+	background : var(--input-range-thumb-focus-bg);
+	box-shadow : var(--focus-input-shadow);
+}
+.custom_range_inputs input[type=range]:focus::-webkit-slider-runnable-track {
+	background: var(--input-range-track-background);
+}
+
+
+.custom_range_inputs .audio_player .equalizer { opacity:var(--equalizer-opacity); }
+.custom_range_inputs .audio_player .equalizer input[type=range]::-moz-range-track {
+	Xdisplay:block; Xmargin:0 auto;
+	height: 100%; width: var(--input-range-track-height);
+
+	background : var(--input-range-track-background);
+	color      : var(--input-range-track-background);
+}
+.custom_range_inputs .audio_player .equalizer input[type=range]::-webkit-slider-runnable-track {
+	height:100%; width:var(--input-range-track-height);
+	background : var(--input-range-track-background);
+	color      : var(--input-range-track-background);
+}
+.custom_range_inputs .audio_player .equalizer input[type=range]::-webkit-slider-thumb {
+	margin-top:0; margin-left:var(--input-range-thumb-margin-left);
+}
+
+.custom_range_inputs .equalizer input[type=range]::-moz-range-thumb {
+	width      : var(--input-range-thumb-height);
+	height     : var(--input-range-thumb-width);
+}
+.custom_range_inputs .equalizer input[type=range]::-webkit-slider-thumb {
+	width        : var(--input-range-thumb-height);
+	height       : var(--input-range-thumb-width);
+}
+
+
+
+
+
+/*EOF*/

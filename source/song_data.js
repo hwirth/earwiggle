@@ -3,10 +3,11 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { DEBUG } from './main.js';
 import { untab } from './helpers.js';
 
-export const songData = async function() {
+export const songData = async function(parameters) {
+	const { SETTINGS, DEBUG } = parameters;
+
 	const urls = [
 		'../../sites/oe/diary/?page=11',
 		'../../sites/oe/diary/?page=13',
@@ -14,8 +15,8 @@ export const songData = async function() {
 	];
 
 	async function loadPoem(fileName) {
-		const response = await fetch(fileName).catch(wiggleREJECT);
-		const html     = await response.text().catch(wiggleREJECT);
+		const response = await fetch(fileName);
+		const html     = await response.text();
 
 		const parser = new DOMParser();
 		const newDocument = parser.parseFromString(html, 'text/html');
@@ -27,11 +28,12 @@ export const songData = async function() {
 	const reduced = text => text.split('\n').reduce(no_annotaions, []).join('\n').replaceAll('\n\n\n', '\n\n');
 
 	const load = (url) => new Promise(done => loadPoem(url).then(done));
-	const lyrics = (await Promise.all(urls.map(load)).catch(wiggleREJECT)).map(reduced);
+	const lyrics = (await Promise.all(urls.map(load))).map(reduced);
 
 	const data = {
 		songs: [
 			{
+				duration : 5*60+38,
 				artist   : 'Harry Furios',
 				album    : 'Orchestronica Classica',
 				title    : 'Für Chris',
@@ -40,6 +42,7 @@ export const songData = async function() {
 				comments : '<a href="https://en.wikipedia.org/wiki/FL_Studio" target="_blank">Fruity Loops 3.5</a>',
 			},
 			{
+				duration : 2*60+48,
 				artist   : 'Harry Furios',
 				album    : 'Orchestronica Furiosa',
 				title    : 'Mule 2000',
@@ -50,6 +53,7 @@ export const songData = async function() {
 				fadeLength : 2,
 			},
 			{
+				duration : 4*60+50,
 				artist   : 'Harry Furios',
 				album    : 'Orchestronica Furiosa',
 				title    : 'Saturn',
@@ -58,6 +62,7 @@ export const songData = async function() {
 				comments : '<a href="https://en.wikipedia.org/wiki/FL_Studio" target="_blank">Fruity Loops 3.5</a>',
 			},
 			{
+				duration : 16*60+3,
 				artist   : 'Harry Furios',
 				album    : DEBUG ? 'Technosis' : 'Orchestronica Furiosa',
 				title    : 'technosis-19',
@@ -68,6 +73,7 @@ export const songData = async function() {
 			},
 		//
 			{
+				duration : 7*60+30,
 				artist   : 'Harry Furios',
 				album    : 'Noise Pollution',
 				title    : 'Smalltalk on Acid',
@@ -76,6 +82,7 @@ export const songData = async function() {
 				comments : '<a href="https://en.wikipedia.org/wiki/FastTracker_2" target="_blank">Fast Tracker II</a>',
 			},
 			{
+				duration : 3*60+29,
 				artist   : 'Harry Furios',
 				album    : 'Noise Pollution',
 				title    : 'Plutonium (Lea al Tarion)',
@@ -84,15 +91,17 @@ export const songData = async function() {
 				comments : '<a href="https://en.wikipedia.org/wiki/FastTracker_2" target="_blank">Fast Tracker II</a>',
 			},
 			{
+				duration : 8*60+35,
 				artist   : 'Harry Furios',
-				album    : 'Noise Pollution',
-				title    : 'May First',
+				album    : 'May First',
+				title    : 'Soundtrack',
 				//image    : 'plutonium.png',
 				image    : 'may_first.png',
-				url      : 'music/neu4_run.ogg',
+				url      : 'music/may_first.mp3',
 				comments : 'Game music for <a href="https://github.com/hwirth/may_first" target="_blank">May First</a>',
 			},
 			{
+				duration : 9*60+30,
 				artist   : 'Harry Furios',
 				album    : 'Dbris Corporation',
 				title    : 'Pirate Theme',
@@ -102,6 +111,7 @@ export const songData = async function() {
 			},
 		//
 			{
+				duration : 2*60+35,
 				artist   : 'Hjalvandar',
 				album    : 'Loot, Lag and Love',
 				title    : 'Loot and Laughter in Avadon',
@@ -111,6 +121,7 @@ export const songData = async function() {
 				comments : '<a href="https://en.wikipedia.org/wiki/Ultima_Online" target="_blank">Ultima Online</a> poems,<br>sonified with <a href="https://suno.com/" target="_blank">Suno <abbr>AI</abbr></a>',
 			},
 			{
+				duration : 2*60+39,
 				artist   : 'Hjalvandar',
 				album    : 'Loot, Lag and Love',
 				title    : 'The Bumbling Battles of the Skittish Squire',
@@ -120,6 +131,7 @@ export const songData = async function() {
 				comments : '<a href="https://en.wikipedia.org/wiki/Ultima_Online" target="_blank">Ultima Online</a> poems,<br>sonified with <a href="https://suno.com/" target="_blank">Suno <abbr>AI</abbr></a>',
 			},
 			{
+				duration : 3*60+55,
 				artist   : 'Hjalvandar',
 				album    : 'Loot, Lag and Love',
 				title    : 'The Dragon\'s Vow',
@@ -130,6 +142,7 @@ export const songData = async function() {
 			},
 		//
 			{
+				duration : 0,
 				artist   : 'Earwiggle <abbr>EQ</abbr> Test',
 				album    : 'White noise',
 				title    : '-6 <abbr>dBFS</abbr>, uniform distribution',
@@ -140,6 +153,7 @@ export const songData = async function() {
 				debug    : true,
 			},
 			{
+				duration : 0,
 				artist   : 'Earwiggle <abbr>EQ</abbr> Test',
 				album    : 'White noise',
 				title    : '0 <abbr>dBFS</abbr>, gaussian distribution',
@@ -150,6 +164,7 @@ export const songData = async function() {
 				debug    : true,
 			},
 			{
+				duration : 0,
 				artist   : 'Earwiggle <abbr>EQ</abbr> Test',
 				album    : 'Sine sweep',
 				title    : '20Hz to 20Khz, linear',
@@ -159,6 +174,7 @@ export const songData = async function() {
 				debug    : true,
 			},
 			{
+				duration : 0,
 				artist   : 'Earwiggle <abbr>EQ</abbr> Test',
 				album    : 'Sine sweep',
 				title    : '20Hz to 20Khz, logarithmic',
@@ -170,8 +186,9 @@ export const songData = async function() {
 
 			// File upload
 			{
-				artist   : 'Earwiggle',
-				album    : 'Local Files',
+				duration : 0,
+				artist   : 'Local Files',
+				album    : 'Play Your Music',
 				title    : '<strong>&uArr; Click to select</strong>',
 				image    : 'UPLOAD_FILE.png',
 				url      : null,

@@ -1,0 +1,273 @@
+/* EARWIGGLE MUSIC PLAYER - CSS Variables */
+
+:root {
+	--page-bg-color              : #000;
+	--text-color                 : #fff;
+	--text-faint                 : #aa9;
+
+	--focus-color                : #4f0;
+	--focus-input-shadow         : 0 0 0 1px var(--focus-color), inset 0 0 0 1px #0008;
+
+	--button-padding             : 0.2em 0.5em;
+	--button-bg                  : #aa9;
+	--button-color               : #000;
+
+	--input-padding              : 0.2em 0.3em;
+	--input-border-radius        : 3px;
+	--input-border-color         : #bbb #777 #777 #bbb;
+	--input-bg                   : var(--playlist-item-bg);
+	--input-color                : #ffe;
+
+	--input-pressed-bg           : #ffe;
+	--input-pressed-shadow-color : #fff8;
+}
+
+:root {
+	--player-item-focus-margin   : 1px;
+	--player-simple-min-height   : calc(var(--cover-width) + 16.5em);
+	--player-advanced-min-height : calc(var(--cover-width) + 33.5em);
+
+	/* Debug */
+	--debug-stats-color          : #fc0;
+	--debug-stats-bg             : #000d;
+	--stats-text-shadow          :
+		1px  0 #000,
+		-1px 0 #000,
+		0 1px  #000,
+		0 -1px #000 ,
+		2px  0 #0008,
+		-2px 0 #0008,
+		0 2px  #0008,
+		0 -2px #0008 ;
+
+
+	/* Light mode: ATTN: When included from uoo_notepad, make sure it matches */
+/*
+	--anchor-color               : #00a;
+	--anchor-visited-color       : #808;
+	--anchor-visited-hover-color : #f0f;
+	--anchor-hover-color         : #08f;
+	--anchor-focus-color         : #fc0;
+	--anchor-active-color        : #f00;
+
+	--anchor-color               : #08f;
+	--anchor-visited-color       : #b4f;
+	--anchor-visited-hover-color : #e2f;
+	--anchor-hover-color         : #0cf;
+	--anchor-focus-color         : #fc0;
+	--anchor-active-color        : #f00;
+*/
+	--anchor-color               : #33ddaa;
+	--anchor-hover-color         : #88ffaa;
+	--anchor-visited-color       : #33ddaa;
+	--anchor-visited-hover-color : #44ffbb;
+	--anchor-focus-color         : #22ff44;
+	--anchor-active-color        : #ee44bb;
+
+	--scrollbar-color            : #888880;
+	--scrollbar-bg               : #444440;
+	--scrollbar-button           : #666660;
+
+	--download-icon-color        : #ccc;
+	--download-icon-bg           : #ccc6;
+
+	--border-color               : #888;
+	--border-faint               : #444;
+	--border-radius              : 5px;
+	--border-radius-small        : 3px;
+
+	--header-bg                  : url(image/lag.webp) center/cover;
+	--menu-bg                    : #234;
+	--main-bg                    : none;
+
+	--player-row-gap             : 0.5em;
+	--player-column-gap          : 2em;
+
+	--audio-width                : 360px;
+	--cover-width                : calc(var(--audio-width) - 6px);
+	--cover-shadow-width         : 3px;
+	--albumlist-scroll-padding   : 0.35em;
+	--filter-margin-top          : 0.5em;
+	--filter-margin-bottom       : 0.5em;
+	--playlist-scroll-padding    : 0.5em;
+	--lyrics-scroll-padding      : 1.2em;
+
+	--item-border                : border:solid 0px var(--border-color);
+	--item-border-faint          : border:solid 0px var(--border-faint);
+
+	--playlist-item-bg           : #20201a;
+	--playlist-hover-bg          : #ffffee30;
+	--playlist-item-bg-stars     : #00000040;
+	--playlist-hover-bg-stars    : #ffffee30;
+
+	--playlist-item-bg           : #282824a0;
+	--playlist-hover-bg          : var(--playlist-item-bg);
+	--playlist-item-bg-stars     : var(--playlist-item-bg);
+	--playlist-hover-bg-stars    : var(--playlist-item-bg-stars);
+
+	--playlist-playing-bg        : #0f04;
+	--playlist-playing-color     : #4f0;
+	--playlist-image-size        : 64px;
+
+
+	--now-playing-height         : 5em;
+
+	--albums-gap                 : 5px;
+	--albums-horizontal-padding  : 3px;
+	--album-list-item-width      : var(--playlist-image-size);
+
+	--nr-h-albums                : 5;
+	--nr-offscreen-albums        : 5.55;
+
+	--playlist-width             : calc(
+		(var(--album-list-item-width) + 2 * var(--albums-horizontal-padding) + 4px/*border+focus?//...margin*/)
+		* var(--nr-h-albums) + var(--albums-gap) * (var(--nr-h-albums) - 1)
+	);
+
+	--thumbnail-bg               : #333;
+	--thumbnail-bg               : transparent;
+
+	--control-padding            : var(--border-radius);
+	--control-padding:5px;
+
+	--timestamp-color            : #fff;
+	--Xtimestamp-bg              : #0208;
+	--Xtimestamp-bg              : #131;
+	--timestamp-color-1          : #060;
+	--timestamp-color-2          : #0f0;
+	--Xtimestamp-color-2         : var(--playlist-playing-color);
+	--Xtimestamp-border          : #381a;
+	--timestamp-text-shadow-1    : #00000088;
+	--timestamp-text-shadow-2    : #00dd3333;
+	--timestamp-text-shadow-3    : #00dd2222;
+	--timestamp-text-shadow-4    : #00dd1111;
+	--timestamp-indicator-off    : #221;
+
+	--equalizer-height           : 6em;
+
+	--analyser-filter            : none;  /* Light mode only */
+
+
+	/* Variety of configurations for future toggle */
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000008;
+	--analyser-peak-color        : #0005;   /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 0.5;
+	--analyser-rainbow-factor    : 0.3;       /* Show full color spectrum */
+	--analyser-offset-y          : 0;       /* No accidential anti-aliasing */
+	--analyser-offset-y          : 1;       /* No accidential anti-aliasing */
+	--analyser-base-height       : 3;       /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.03;
+	--analyser-hide-base-shift   : 0;       /* No idea what it does */
+	--analyser-set-alpha         : true;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 0.01;
+
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000001;
+	--analyser-peak-color        : #0003;   /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1;
+	--analyser-rainbow-factor    : 0.35;       /* Show full color spectrum */
+	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 1;    /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 3;       /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.02;
+	--analyser-hide-base-shift   : -0.01;   /* No idea what it does */
+	--analyser-set-alpha         : true;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+
+	--analyser-height            : 112px;
+	--analyser-clear-color       : transparent;
+	--analyser-peak-color        : #0005;   /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 0.35;
+	--analyser-rainbow-factor    : 1;       /* Show full color spectrum */
+	--analyser-rainbow-factor    : 0.3;     /* 0.3: Red to green, because blue is //... barely visible */
+	--analyser-offset-y          : 0;       /* No accidential anti-aliasing */
+	--analyser-offset-y          : 1;       /* No accidential anti-aliasing */
+	--analyser-base-height       : 3;       /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.02;
+	--analyser-hide-base-shift   : -0.01;   /* No idea what it does */
+	--analyser-set-alpha         : true;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000002;
+	--analyser-peak-color        : #0008;   /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 0.65;
+	--analyser-rainbow-factor    : 0.35;       /* Show full color spectrum */
+	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 0.5;    /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 3;       /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.01;
+	--analyser-hide-base-shift   : -0.01;   /* No idea what it does */
+	--analyser-set-alpha         : true;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+
+	--analyser-frequency-zoom    : 2;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
+	--analyser-top-freq-bars     : 4;
+	--analyser-top-freq-fade     : 7;
+	--analyser-fade-bar-width    : 1;
+
+
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000001;
+	--analyser-peak-color        : #0007;   /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1.5;
+	--analyser-rainbow-factor    : 0.6;       /* Show full color spectrum */
+	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 0.5;    /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 3;       /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.025;
+	--analyser-hide-base-shift   : -0.02;   /* No idea what it does */
+	--analyser-set-alpha         : true;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 4;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
+	--analyser-top-freq-bars     : 5;
+	--analyser-top-freq-fade     : 7;
+	--analyser-fade-bar-width    : 1;
+
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000008;
+	--analyser-peak-color        : #0008;   /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1.5;
+	--analyser-rainbow-factor    : 0.6;       /* Show full color spectrum */
+	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 1.5;    /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 3;       /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.025;
+	--analyser-hide-base-shift   : -0.02;   /* No idea what it does */
+	--analyser-set-alpha         : true;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 4;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
+	--analyser-top-freq-bars     : 5;
+	--analyser-top-freq-fade     : 7;
+	--analyser-fade-bar-width    : 0.5;
+
+
+
+	--Xanalyser-rainbow-factor    : 2.875;       /* Show full color spectrum */
+	--Xanalyser-rainbow-factor    : 11.5;       /* Show full color spectrum */
+
+
+	--waveform-height            : 64px;
+	--waveform-bg                : #0004;
+	--waveform-progress-color    : #fc0;
+	--waveform-progress-shadow   : #0002;
+	--waveform-empty-color-1     : #b0b0a840;
+	--waveform-empty-color-2     : #808078c0;
+
+	--waveform-left-color-max    : #08f8;
+	--waveform-left-color-avg    : #4cf6;
+	--waveform-right-color-avg   : #4fc6;
+	--waveform-right-color-max   : #0f88;
+
+	--serif-font-family          : Libertinus Serif, serif;
+}
+
+
+/*EOF*/

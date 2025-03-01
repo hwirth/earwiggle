@@ -3,7 +3,6 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { DEBUG    } from './main.js';
 import { songData } from './song_data.js';
 
 function normalize(string) {
@@ -14,23 +13,23 @@ function normalize(string) {
 }
 
 export class MusicLibrary {
-	constructor(parameters = {}) {
+	constructor(parameters) {  // Expect to pass through SETTINGS, DEBUG to songData()
 		this.songs       = [];
 		this.albums      = [];
 		this.albumNames  = [];
 		this.artistNames = [];
 
 		return new Promise(async(resolve) => {
-			const data = await songData().catch(wiggleREJECT);
+			const data = await songData(parameters);
 
-			const allowed = entry => !entry.debug || parameters.testSounds;
+			const allowed = entry => !entry.debug || parameters.SETTINGS.AUDIO_PLAYER.TEST_SOUNDS;
 			this.songs  = data.songs.filter(allowed);
 			this.albums = data.albums.filter(allowed);
 
 			this.albumNames  = [...new Set(this.songs.flatMap(s => s.album ))];
 			this.artistNames = [...new Set(this.songs.flatMap(s => s.artist))];
 
-			if (DEBUG) {
+			if (parameters.DEBUG.MUSIC_LIBRARY) {
 				console.group('MusicLibrary');
 				console.log(this.songs      .length, 'songs'  , this.songs      );
 				console.log(this.artistNames.length, 'artists', this.artistNames);

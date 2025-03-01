@@ -1,0 +1,331 @@
+General
+Complete name                            : ../music/DBRIS1.mp3
+Format                                   : MPEG Audio
+File size                                : 8.70 MiB
+Duration                                 : 9 min 30 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 128 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 9 min 30 s
+Bit rate mode                            : Constant
+Bit rate                                 : 128 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 8.70 MiB (100%)
+
+
+General
+Complete name                            : ../music/Fuer_Chris_lo.mp3
+Format                                   : MPEG Audio
+File size                                : 2.58 MiB
+Duration                                 : 5 min 38 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 64.0 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Duration                                 : 5 min 38 s
+Bit rate mode                            : Constant
+Bit rate                                 : 64.0 kb/s
+Channel(s)                               : 1 channel
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 2.58 MiB (100%)
+
+
+General
+Complete name                            : ../music/HarryF - Nuit (Maha Lingam).mp3
+Format                                   : MPEG Audio
+File size                                : 3.90 MiB
+Duration                                 : 4 min 15 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 128 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo
+Duration                                 : 4 min 15 s
+Bit rate mode                            : Constant
+Bit rate                                 : 128 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 3.90 MiB (100%)
+
+
+General
+Complete name                            : ../music/HarryF - Plutonium (Lea al Tarion).mp3
+Format                                   : MPEG Audio
+File size                                : 3.20 MiB
+Duration                                 : 3 min 29 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 128 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 3 min 29 s
+Bit rate mode                            : Constant
+Bit rate                                 : 128 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 3.20 MiB (100%)
+
+
+General
+Complete name                            : ../music/HarryF - Smalltalk on Acid.mp3
+Format                                   : MPEG Audio
+File size                                : 6.87 MiB
+Duration                                 : 7 min 30 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 128 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 7 min 30 s
+Bit rate mode                            : Constant
+Bit rate                                 : 128 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 6.87 MiB (100%)
+
+
+General
+Complete name                            : ../music/jam.mp3
+Format                                   : MPEG Audio
+File size                                : 526 KiB
+Duration                                 : 1 min 7 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 64.0 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Duration                                 : 1 min 7 s
+Bit rate mode                            : Constant
+Bit rate                                 : 64.0 kb/s
+Channel(s)                               : 1 channel
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 526 KiB (100%)
+
+
+General
+Complete name                            : ../music/Loot and Laughter in Avadon.mp3
+Format                                   : MPEG Audio
+File size                                : 3.34 MiB
+Duration                                 : 2 min 35 s
+Overall bit rate mode                    : Variable
+Overall bit rate                         : 180 kb/s
+Writing library                          : LAME3.100
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 2 min 35 s
+Bit rate mode                            : Variable
+Bit rate                                 : 180 kb/s
+Minimum bit rate                         : 32.0 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 48.0 kHz
+Frame rate                               : 41.667 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 3.34 MiB (100%)
+Writing library                          : LAME3.100
+Encoding settings                        : -m j -V 2 -q 0 -lowpass 18.5 --vbr-new -b 32
+
+
+General
+Complete name                            : ../music/mule2k.mp3
+Format                                   : MPEG Audio
+File size                                : 2.57 MiB
+Duration                                 : 2 min 48 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 128 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 2 min 48 s
+Bit rate mode                            : Constant
+Bit rate                                 : 128 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 2.57 MiB (100%)
+
+
+General
+Complete name                            : ../music/neu4_run.ogg
+Format                                   : Ogg
+File size                                : 7.43 MiB
+Duration                                 : 8 min 35 s
+Overall bit rate mode                    : Variable
+Overall bit rate                         : 121 kb/s
+
+Audio
+ID                                       : 23454 (0x5B9E)
+Format                                   : Vorbis
+Format settings, Floor                   : 1
+Duration                                 : 8 min 35 s
+Bit rate mode                            : Variable
+Bit rate                                 : 128 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Compression mode                         : Lossy
+Stream size                              : 7.87 MiB
+Writing library                          : libVorbis 1.2 (2007-06-22)
+
+
+General
+Complete name                            : ../music/Saturn_hi.mp3
+Format                                   : MPEG Audio
+File size                                : 6.65 MiB
+Duration                                 : 4 min 50 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 192 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 4 min 50 s
+Bit rate mode                            : Constant
+Bit rate                                 : 192 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 6.65 MiB (100%)
+
+
+General
+Complete name                            : ../music/Smalltalk_on_Acid.mp3
+Format                                   : MPEG Audio
+File size                                : 6.87 MiB
+Duration                                 : 7 min 30 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 128 kb/s
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 7 min 30 s
+Bit rate mode                            : Constant
+Bit rate                                 : 128 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 6.87 MiB (100%)
+
+
+General
+Complete name                            : ../music/technosis-19.mp3
+Format                                   : MPEG Audio
+File size                                : 29.4 MiB
+Duration                                 : 16 min 3 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 256 kb/s
+Writing library                          : LAME3.84 (alpha 1)
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 16 min 3 s
+Bit rate mode                            : Constant
+Bit rate                                 : 256 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 44.1 kHz
+Frame rate                               : 38.281 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 29.4 MiB (100%)
+Writing library                          : LAME3.84 (alpha 1)
+
+
+General
+Complete name                            : ../music/The Bumbling Battles of the Skittish Squire.mp3
+Format                                   : MPEG Audio
+File size                                : 3.64 MiB
+Duration                                 : 2 min 39 s
+Overall bit rate mode                    : Constant
+Overall bit rate                         : 192 kb/s
+Writing library                          : LAME3.100
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo / MS Stereo
+Duration                                 : 2 min 39 s
+Bit rate mode                            : Constant
+Bit rate                                 : 192 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 48.0 kHz
+Frame rate                               : 41.667 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 3.64 MiB (100%)
+Writing library                          : LAME3.100
+
+
+General
+Complete name                            : ../music/The Dragon's Vow.mp3
+Format                                   : MPEG Audio
+File size                                : 5.17 MiB
+Duration                                 : 3 min 55 s
+Overall bit rate mode                    : Variable
+Overall bit rate                         : 184 kb/s
+Writing library                          : LAME3.100
+
+Audio
+Format                                   : MPEG Audio
+Format version                           : Version 1
+Format profile                           : Layer 3
+Format settings                          : Joint stereo
+Duration                                 : 3 min 55 s
+Bit rate mode                            : Variable
+Bit rate                                 : 184 kb/s
+Minimum bit rate                         : 32.0 kb/s
+Channel(s)                               : 2 channels
+Sampling rate                            : 48.0 kHz
+Frame rate                               : 41.667 FPS (1152 SPF)
+Compression mode                         : Lossy
+Stream size                              : 5.17 MiB (100%)
+Writing library                          : LAME3.100
+Encoding settings                        : -m j -V 2 -q 0 -lowpass 18.5 --vbr-new -b 32
+
+

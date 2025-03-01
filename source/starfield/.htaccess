@@ -1,0 +1,29 @@
+Options Indexes
+DirectoryIndex index.html index.php
+RewriteEngine Off
+
+ErrorDocument 404 "404 - Not found"
+
+AddHandler application/x-httpd-php .html .php
+#AddType image/x-icon .ico
+
+Header set Cache-Control "max-age=0, public, no-cache, must-revalidate"
+Header set Pragma "no-cache"
+Header unset ETag
+
+<FilesMatch "\.(flv|ico|pdf|avi|mov|ppt|pdf|doc|mp3|wmv|wav|jpg|jpeg|png|gif|css|js|txt|ico)$">
+#	Header set Cache-Control "max-age=29030400, no-cache, public, must-revalidate"
+	Header set Cache-Control "max-age=0, public, no-cache, must-revalidate"
+	Header set Pragma "no-cache"
+	Header unset ETag
+</FilesMatch>
+#
+#<FilesMatch "\.(html|php)$">
+#	Header set Cache-Control "max-age=29030400, cache, public, must-revalidate"
+#	Header set Pragma "no-cache"
+#
+#	#Header set Cache-Control "no-cache"
+#	#Header set Pragma "no-cache"
+#	#Header unset ETag
+#	#Header unset Last-Modified
+#</FilesMatch>

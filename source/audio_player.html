@@ -1,0 +1,189 @@
+<!-- audio_player.html -->
+<!-- EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/ -->
+
+
+<template id="t_audio_player">
+</template>
+
+
+<section class="simple audio_player volume1">
+	<div class="controls">
+		<button name="back"        class="audio_track_back"  title="Skip to previous song">Back</button>
+		<button name="stop"        class="audio_stop"        title="Stop playing">Stop</button>
+		<button name="play"        class="audio_play"        title="Play/pause">Play</button>
+		<button name="pause"       class="audio_pause"       title="Pause playback">Pause</button>
+		<button name="next"        class="audio_track_next"  title="Skip to next song">Next</button>
+		<input name="volume"   type="range" min="0" max="1" title="Volume"        step="any" value="0.25">
+		<button name="volume_down" class="audio_volume_down" title="Lower base volume">Reduce base volume</button>
+		<button name="volume_mute" class="audio_volume_mute" title="Turn off sound">Zero volume</button>
+		<button name="volume_up"   class="audio_volume_up"   title="Higher base volume">Increase base volume</button>
+		<button name="advanced"    class="audio_tuning"      title="Advanced Controls">Waveform, EQ, Analyser</button>
+		<input name="progress" type="range" min="0" max="1" title="Progress/Seek" step="any" value="0">
+		<button name="loop_list"   class="audio_loop_list"   title="Loop playlist">Loop Playlist</button>
+		<button name="loop_song"   class="audio_loop_song"   title="Loop song">Loop Song</button>
+		<time>
+			<span class="timestamp">00:00:00.0</span>
+			<span class="remaining">00:00:00.0</span>
+			<span class="indicator list on">List</span>
+			<span class="indicator song">Song</span>
+			<span class="indicator pause blink">Pause</span>
+			<abbr class="indicator stars on">Stars</abbr>
+		</time>
+		<button name="config"      class="audio_config"      title="Toggle starfield animation">Configuration</button>
+		<button name="import"      class="audio_eject"       title="Play your own music">Import Songs</button>
+	</div>
+	<canvas class="waveform"></canvas>
+	<div class="equalizer">
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+	</div>
+	<canvas class="analyser"></canvas>
+	<div class="reels">
+		<span class="primary reel"></span>
+		<span class="secondary reel"></span>
+	</div>
+	<form class="filter" autocomplete="on" autocorrect="off" spellcheck="off">
+		<input name="filter_text" type="text" placeholder="Artist, album, title" autofocus>
+		<button name="filter_apply">Filter</button>
+		<button name="filter_clear">All Songs</button>
+	</form>
+	<ul class="albumlist" Xtabindex="0"></ul>
+	<ol class="playlist" Xtabindex="0"></ol>
+	<div class="album_cover">
+		<a href="covers/earwiggle_music_player.jpg" target="_blank">
+			<img src="covers/earwiggle_music_player.jpg" alt="Album cover">
+		</a>
+		<p class="comments"><b>Eardrums not included</b></p>
+	</div>
+	<div class="now_playing">
+		<h2>
+			<span class="artist">Earwiggle</span>
+			<span class="album"></span>
+			<span class="song">Music Player</span>
+		</h2>
+	</div>
+	<pre class="lyrics"></pre>
+</section>
+
+<!-- menu id="hio">
+	<li><a href="/">harald.ist.org</a></li>
+	<li><a href="/stubs">/stubs</a></li>
+	<li><a href="./">Wiggle Music Player</a></li>
+</menu -->
+
+<pre class="hidden debug_stats"></pre>
+
+
+<template id="t_controls">
+	<div class="controls">
+		<button name="back"        class="audio_track_back"  title="Skip to previous song">Back</button>
+		<button name="stop"        class="audio_stop"        title="Stop playing">Stop</button>
+		<button name="play"        class="audio_play"        title="Play/pause">Play</button>
+		<button name="pause"       class="audio_pause"       title="Pause playback">Pause</button>
+		<button name="next"        class="audio_track_next"  title="Skip to next song">Next</button>
+
+		<input name="volume"   type="range" min="0" max="1" title="Volume"        step="any" value="0.25">
+
+		<button name="volume_down" class="audio_volume_down" title="Lower base volume">Reduce base volume</button>
+		<button name="volume_mute" class="audio_volume_mute" title="Turn off sound">Zero volume</button>
+		<button name="volume_up"   class="audio_volume_up"   title="Higher base volume">Increase base volume</button>
+		<button name="advanced"    class="audio_tuning"      title="Advanced Controls">Waveform, EQ, Analyser</button>
+
+		<input name="progress" type="range" min="0" max="1" title="Progress/Seek" step="any" value="0">
+
+		<button name="loop_list"   class="audio_loop_list"   title="Loop playlist">Loop Playlist</button>
+		<button name="loop_song"   class="audio_loop_song"   title="Loop song">Loop Song</button>
+		<button name="import"      class="audio_eject"       title="Play your own music">Import Songs</button>
+
+		<time class="timestamp">00:00:00.0</time>
+		<!-- span class="timestamp">00:00:00.0</span -->
+
+		<button name="config"      class="audio_config"      title="Toggle starfield animation">Configuration</button>
+	</div>
+</template>
+
+
+<template id="t_waveform">
+	<canvas class="waveform"></canvas>
+</template>
+
+
+<template id="t_equalizer">
+	<div class="equalizer">
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+		<input type="range" min="-1" max="1" value="0" step="any"><span>0 Hz</span>
+	</div>
+</template>
+
+
+<template id="t_analyser">
+	<canvas class="analyser"></canvas>
+</template>
+
+
+<template id="t_filter">
+	<form class="filter">
+		<input name="filter_text" type="text" placeholder="Artist, album, title" autofocus>
+		<button name="filter_apply">Filter</button>
+		<button name="filter_clear">All Songs</button>
+	</form>
+</template>
+
+
+<template id="t_albumlist">
+	<ul class="albumlist" Xtabindex="0"></ul>
+</template>
+
+
+<template id="t_playlist">
+	<ol class="playlist" Xtabindex="0"></ol>
+</template>
+
+
+<template id="t_album_cover">
+	<div class="album_cover">
+		<a href="covers/earwiggle_music_player.jpg" target="_blank">
+			<img src="covers/earwiggle_music_player.jpg" alt="Album cover">
+		</a>
+		<p class="comments"><b>Eardrums not included</b></p>
+	</div>
+</template>
+
+
+<template id="t_now_playing">
+	<div class="now_playing">
+		<h2>
+			<span class="artist">Earwiggle</span>
+			<span class="album"></span>
+			<span class="song">Music Player</span>
+		</h2>
+	</div>
+</template>
+
+
+<template id="t_lyrics">
+	<pre class="lyrics"></pre>
+</template>
+
+
+<!-- EOL -->

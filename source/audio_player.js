@@ -3,21 +3,20 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { DEBUG } from './main.js';
-
-import { clamp, newElement, triggerDownload, format_time, extensionJpg, isMobileDevice } from './helpers.js';
+import { clamp, newElement, triggerDownload, format_time, extensionJpg, isMobileDevice, wakeLock } from './helpers.js';
 
 import { Waveform         } from './waveform.js';
 import { SpectrumAnalyser } from './spectrum_analyser.js';
 import { GraphicEqualizer } from './graphic_equalizer.js';
 
-const STORAGE_KEY      = 'earwigglePlayer';
-const MAX_VOLUME       = 1.25;
-const USE_UPDATE_TIMER = true;   // true: Use setTimeout to update the timestamp faster than with audio.ontimeupdate
-
-
-export function AudioPlayer(parameters) {
+export const AudioPlayer = function(parameters) {
 	const self = this;
+
+	const { SETTINGS, DEBUG } = parameters;
+	const {
+		STORAGE_KEY, MAX_VOLUME, POST_AMP_VOLUME,
+		USE_UPDATE_TIMER, ITEM_INTO_VIEW,
+	} = SETTINGS.AUDIO_PLAYER;
 
 	this.elements;
 	this.observer;
@@ -44,7 +43,7 @@ export function AudioPlayer(parameters) {
 	this.analyser;
 	this.analyserFade;
 
-	this.waveform;
+	this.waveForm;
 
 	this.totalPlayTime;
 
@@ -54,6 +53,7 @@ export function AudioPlayer(parameters) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function debug_audio(title) {
+		if (!DEBUG.AUDIO_ELEMENT) return;
 		console.groupCollapsed(`AudioPlayer${title}`  , self.audio.src);
 		console.log('audio.autoplay:'        , self.audio.autoplay);
 		console.log('audio.duration:'        , self.audio.duration);
@@ -68,6 +68,7 @@ export function AudioPlayer(parameters) {
 	}
 
 	function on_event_debug(event) {
+		if (!DEBUG.AUDIO_ELEMENT) return;
 		console.groupCollapsed(`<audio> %c${event.type}`, 'color:green');
 		console.log(event);
 		console.groupEnd();
@@ -104,6 +105,30 @@ export function AudioPlayer(parameters) {
 // PLAYLIST
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	self.observer = {};
+
+	function load_lazy(list) {
+		const key = Object.entries(self.elements).find(([key, e]) => list === e ? key : false);
+		if (self.observer[key]) self.observer[key].disconnect();
+
+		const thumbnails = list.querySelectorAll('img');
+		const options = {
+			root       : null,
+			rootMargin : '0px',
+			threshold  : 0.1,
+		};
+		self.observer[key] = new IntersectionObserver(thumbnails => {
+			thumbnails.forEach(entry => {
+				const img = entry.target;
+				if (entry.isIntersecting) {
+					img.src = img.dataset.src;
+					(self.observer[key]).unobserve(img);
+				}
+			});
+		}, options);
+
+		thumbnails.forEach(img => (self.observer[key]).observe(img));
+	}
 
 	this.loadAlbums = function(albums) {
 		function on_album_click(event) {
@@ -113,8 +138,8 @@ export function AudioPlayer(parameters) {
 			on_filter_click(event);
 		}
 
-		self.elements.albumList.innerHTML = '';
-		self.elements.albumList.append(
+		self.elements.albumlist.innerHTML = '';
+		self.elements.albumlist.append(
 			...albums.map((album, index) => newElement({
 				tagName    : 'li',
 				attributes : {
@@ -155,13 +180,13 @@ export function AudioPlayer(parameters) {
 				],
 			})),
 		);
+
+		load_lazy(self.elements.albumlist);
 	}
 
 	this.loadSongs = function(songs, index) {
 		self.songs = songs;
 		self.index = clamp(parameters.index || 0, 0, self.songs.length-1);
-
-		const playingItem = self.elements.playlist.querySelector('li.playing');
 
 		function on_download_click(event) {
 			event.preventDefault();
@@ -222,36 +247,11 @@ export function AudioPlayer(parameters) {
 				],
 			})),
 		);
-if (!true) {//...
-		const trigger_entries = self.elements.playlist.querySelectorAll('li[data-trigger]');
-console.log({trigger_entries})
-		const first_entry = self.elements.playlist.querySelector('li');
-		trigger_entries.forEach(e => e.remove());
-		self.elements.playlist.append(...trigger_entries);
-}
-		// Lazy loading
-		if (self.observer) self.observer.disconnect();
-		const thumbnails = [
-			...self.elements.albumList.querySelectorAll('img'),
-			...self.elements.playlist .querySelectorAll('img'),
-		];
-		const options = {
-			root       : null,
-			rootMargin : '0px',
-			threshold  : 0.1,
-		};
-		self.observer = new IntersectionObserver(thumbnails => {
-			thumbnails.forEach(entry => {
-				const img = entry.target;
-				if (entry.isIntersecting) {
-					img.src = img.dataset.src;
-					self.observer.unobserve(img);
-				}
-			});
-		}, options);
-		thumbnails.forEach(img => self.observer.observe(img));
+
+		load_lazy(self.elements.playlist);
 
 		// Select current song
+		const playingItem = self.elements.playlist.querySelector('li.playing');
 		if (playingItem) {
 			const song = self.elements.playlist.querySelector(
 				'li[data-song-id="' + playingItem.dataset.songId + '"]',
@@ -268,19 +268,24 @@ console.log({trigger_entries})
 	this.play = function(event) {
 		const song = self.songs[self.index];
 
+		if (1||DEBUG.AUDIO_PLAYLIST) console.log(
+			'>>>', self.index, song,
+		);
+
 		self.currentSongID = self.library.songs.indexOf(song);
 
 		self.audio.src  = song.url;
 		self.audio.loop = Boolean(song.loop);
 		self.audio.play().catch(error => {
 			console.error(`Can't play ${song.title || song.album || song.artist}: ${error}`);
-			self.waveform.showError();
+			self.waveForm.showError();
 		});
 
 		// Prevent "BiquadFilterNode channel count changes may produce audio glitches" warning:
 		//...self.createAudioGraph();   // We could avoid this, if he had access to channel count of <audio>
+		self.createAudioGraph();
 
-		if (DEBUG) debug_audio('.play');
+		if (DEBUG.ENABLED) debug_audio('.play');
 
 		self.fadeOutGain.gain.cancelScheduledValues(0);
 		self.fadeOutGain.gain.value = 1;
@@ -288,13 +293,16 @@ console.log({trigger_entries})
 		self.fadeStart  = song.fadeStart;
 		self.fadeLength = song.fadeLength;
 
+		wakeLock(true);
+
 		self.elements.play .classList.toggle('pressed', true);
 		self.elements.stop .classList.toggle('pressed', false);
 		self.elements.pause.classList.toggle('pressed', self.audio.paused);
+		self.elements.lcdPause.classList.remove('blink');
 
 		self.elements.playlist.querySelectorAll('li').forEach((element, index) => {
 			if (index == self.index) {
-				element.scrollIntoView({ block: 'nearest' });
+				if (ITEM_INTO_VIEW) element.scrollIntoView({ block: 'nearest' });
 				element.classList.add('playing');
 			} else {
 				element.classList.remove('playing');
@@ -313,8 +321,8 @@ console.log({trigger_entries})
 		self.audioContext.resume();
 		self.analyser.resume();
 
-		self.waveform.reset();
-		self.waveform.showProgress(0);
+		self.waveForm.reset();
+		self.waveForm.showProgress(0);
 
 		if (parameters.onPause) parameters.onPause(self.audio.paused);
 
@@ -322,7 +330,7 @@ console.log({trigger_entries})
 		self.totalPlayTime = 0;
 
 		self.startPlayTime = Date.now();
-		if (DEBUG) console.log(
+		if (DEBUG.AUDIO_CONTEXT) console.log(
 			'AudioPlayer.play: Context', self.audioContext.state,
 			'at', self.audioContext.sampleRate, 'Hz,',
 			self.audioContext.destination.maxChannelCount, 'output channels,',
@@ -331,33 +339,42 @@ console.log({trigger_entries})
 	}
 
 	this.stop = function() {
+		wakeLock(false);
+
 		self.audio.pause();
 		self.audio.currentTime = 0;
 
 		self.elements.play .classList.toggle('pressed', false);
 		self.elements.stop .classList.toggle('pressed', true);
 		self.elements.pause.classList.toggle('pressed', false);
+		self.elements.lcdPause.classList.remove('blink');
 
 		self.audioContext.suspend();
 		self.analyser.suspend();
 
 		//... Timeout to halt analyser
+		self.waveForm.reset();
+		self.waveForm.showProgress(0);
 
 		if (parameters.onPause) parameters.onPause(self.audio.paused);
+
 	}
 
 	this.pause = function() {
 		if (self.audio.paused) {
+			wakeLock(true);
 			self.audioContext.resume();
 			self.analyser.resume();
 			self.audio.play();
 		} else {
+			wakeLock(false);
 			self.audioContext.suspend();
 			self.analyser.suspend();
 			self.audio.pause();
 		};
 
-		self.elements.pause.classList.toggle('pressed', self.audio.paused);
+		self.elements.pause   .classList.toggle('pressed', self.audio.paused);
+		self.elements.lcdPause.classList.toggle('blink'  , self.audio.paused);
 		if (parameters.onPause) parameters.onPause(self.audio.paused);
 
 		if (self.startPlayTime !== null) {
@@ -368,6 +385,10 @@ console.log({trigger_entries})
 
 	this.next = function() {
 		self.index = (self.index + 1) % self.songs.length;
+
+		const song = self.songs[self.index];
+		if (song.trigger || song.debug) return self.next();
+
 		self.play();
 	}
 
@@ -378,6 +399,10 @@ console.log({trigger_entries})
 
 	this.back = function() {
 		self.index = (self.index - 1 + self.songs.length) % self.songs.length;
+
+		const song = self.songs[self.index];
+		if (song.trigger || song.debug) return self.back();
+
 		self.play();
 	}
 
@@ -392,8 +417,10 @@ console.log({trigger_entries})
 			self.loopList = false;
 		}
 
-		self.elements.loopSong.classList.toggle('pressed', self.loopSong);
 		self.elements.loopList.classList.toggle('pressed', self.loopList);
+		self.elements.lcdList .classList.toggle('on'     , self.loopList);
+		self.elements.loopSong.classList.toggle('pressed', self.loopSong);
+		self.elements.lcdSong .classList.toggle('on'     , self.loopSong);
 	}
 
 	this.toggleLoopList = function(enabled = null) {
@@ -407,14 +434,16 @@ console.log({trigger_entries})
 			self.loopSong = false;
 		}
 
-		self.elements.loopSong.classList.toggle('pressed', self.loopSong);
 		self.elements.loopList.classList.toggle('pressed', self.loopList);
+		self.elements.lcdList .classList.toggle('on'     , self.loopList);
+		self.elements.loopSong.classList.toggle('pressed', self.loopSong);
+		self.elements.lcdSong .classList.toggle('on'     , self.loopSong);
 	}
 
 	this.volume = function(fraction) {
 		fraction = parseFloat(fraction, 10);
 		const volume = clamp(fraction, 0, 1);
-		self.outputGain.gain.value = volume * MAX_VOLUME;
+		self.outputGain.gain.value = volume * MAX_VOLUME * POST_AMP_VOLUME;
 		self.elements.volume.value = volume;
 		self.elements.volume.title = 'Volume: ' + Math.round(volume * MAX_VOLUME * 100) + '%';
 	}
@@ -432,14 +461,14 @@ console.log({trigger_entries})
 	function on_timeupdate(event) {
 		if (self.userSeeking) return;
 
-		if (self.audio.duration) {
+		if (self.audio.currentTime / self.audio.duration) {
 			self.elements.progress.max   = Math.ceil(self.audio.duration * 10) / 10;
 			self.elements.progress.value = Math.round(self.audio.currentTime * 10) / 10;
-			self.waveform.showProgress(self.audio.currentTime / self.audio.duration);
+			self.waveForm.showProgress(self.audio.currentTime / self.audio.duration);
 		} else {
 			self.elements.progress.max   = 1;
 			self.elements.progress.value = 0;
-			self.waveform.showProgress(0);
+			self.waveForm.showProgress(0);
 		}
 
 		if (
@@ -458,11 +487,14 @@ console.log({trigger_entries})
 	function on_timestamp_update() {
 		const time = self.audio.currentTime;
 		const next_update_ms = 101 - Math.floor(time * 1000) % 100;
-		if (USE_UPDATE_TIMER) setTimeout(on_timestamp_update, next_update_ms);
 
-		if (!document.hidden) {
-			self.elements.timestamp.innerText = format_time(time);
-		}
+		if (USE_UPDATE_TIMER) setTimeout(on_timestamp_update, next_update_ms);
+		if (document.hidden) return;
+
+		self.elements.timestamp.innerText = self.elements.timestamp.dataset.time = format_time(time);
+		self.elements.remaining.innerText = self.elements.remaining.dataset.time = format_time(
+			self.audio.duration - time
+		);
 	}
 
 	function on_ended() {
@@ -470,12 +502,11 @@ console.log({trigger_entries})
 			self.play();
 		}
 		else if (self.loopList) {
-			self.index = (self.index + 1) % self.songs.length;
-			self.play();
+			//self.index = (self.index + 1) % self.songs.length;
+			self.next();
 		}
 		else if (self.index < self.songs.length - 1) {
-			self.index++;
-			self.play();
+			self.next();
 		}
 	}
 
@@ -487,9 +518,12 @@ console.log({trigger_entries})
 	function on_play_click(event) {
 		if (event.button != 0) return;
 
-		//self.play();
-		//... Option
-		on_pause_click(event);
+		if (self.audio.paused) {
+			self.play();
+		} else {
+			on_pause_click(event);
+		}
+
 		self.elements.play.classList.toggle('pressed', !self.audio.paused);
 		self.elements.stop.classList.toggle('pressed', false);
 	}
@@ -528,7 +562,7 @@ console.log({trigger_entries})
 		if (parameters.onConfig) parameters.onConfig();
 	}
 
-	function on_settings_click() {
+	function on_advanced_click() {
 		self.toggleAdvancedControls();
 	}
 
@@ -546,11 +580,11 @@ console.log({trigger_entries})
 	function on_waveform_mousedown(event) {
 		if (event.button != 0) return;
 		if (event.ctrlKey) {
-			self.waveform.hollowIndicator = !self.waveform.hollowIndicator;
+			self.waveForm.hollowIndicator = !self.waveForm.hollowIndicator;
 			return;
 		}
 
-		const ratio = event.layerX / self.elements.waveform.width;
+		const ratio = event.layerX / self.elements.waveForm.width;
 		self.seek(ratio * self.audio.duration);
 	}
 
@@ -579,7 +613,11 @@ console.log({trigger_entries})
 		if (listItem.dataset.trigger == 'upload') {
 			self.elements.import.click();
 		} else {
-			self.gotoSong(listItem.dataset.index * 1);
+			if (self.audio.playing) {
+
+			} else {
+				self.gotoSong(listItem.dataset.index * 1);
+			}
 		}
 
 		if (event?.shiftKey) {
@@ -587,6 +625,20 @@ console.log({trigger_entries})
 			url.searchParams.set('playsong', self.index + 1);
 			window.history.replaceState(null, null, url.toString());
 		}
+	}
+
+	function on_clear_click() {
+		self.elements.filterTerm.value = '';
+
+		self.loadSongs(self.library.songs);
+
+		if (self.audio?.paused) {
+			self.elements.albumCover.src = 'covers/earwiggle_music_player.jpg';
+			self.elements.albumCover.closest('a').href = 'fullsize_covers/earwiggle_music_player.png';
+		}
+
+		self.elements.filterApply.classList.remove('pressed');
+		self.elements.filterClear.classList.add('pressed');
 	}
 
 	function on_filter_click(event) {
@@ -597,20 +649,10 @@ console.log({trigger_entries})
 		if (!filter) return on_clear_click(event);
 
 		self.songs = self.library.songsByAny(filter);
-		self.loadAlbums(self.library.albums);
 		self.loadSongs(self.songs);
-	}
 
-	function on_clear_click() {
-		self.elements.filterTerm.value = '';
-
-		self.loadAlbums(self.library.albums);
-		self.loadSongs(self.library.songs);
-
-		if (self.audio?.paused) {
-			self.elements.albumCover.src = 'covers/earwiggle_music_player.jpg';
-			self.elements.albumCover.closest('a').href = 'fullsize_covers/earwiggle_music_player.png';
-		}
+		self.elements.filterClear.classList.remove('pressed');
+		self.elements.filterApply.classList.add('pressed');
 	}
 
 
@@ -669,7 +711,7 @@ console.log({trigger_entries})
 
 			input.addEventListener('change', on_change);
 			input.click();
-		}).catch(wiggleREJECT);
+		});
 
 		entries.forEach(e => self.library.addSong(e));
 
@@ -690,7 +732,7 @@ console.log({trigger_entries})
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.createAudioGraph = function() {
-		if (DEBUG) console.log('AudioPlayer creating audio graph');
+		if (DEBUG.AUDIO_CONTEXT) console.log('AudioPlayer creating audio graph');
 
 		const use_eq = true || !isMobileDevice();//... Doesn't belong here, we need advanced control setting
 		self.elements.equalizer.classList.toggle('hidden', !use_eq);   //... hidden not enough: grid gap
@@ -704,22 +746,24 @@ console.log({trigger_entries})
 			self.equalizer = null;
 		}
 
-		if (use_eq) self.equalizer = new GraphicEqualizer(
-			self.audioContext,
-			self.sourceGain,
-			self.elements.eqBands,
-			self.elements.eqFreqs,
-			parameters.loadConfig,
-		);
-		self.analyser = new SpectrumAnalyser(
-			self.audioContext,
-			(use_eq ? self.equalizer.output : self.sourceGain),
-			self.elements.analyser,
-			self.analyserFade,
-			parameters.loadConfig,
-		);
+		if (use_eq) self.equalizer = new GraphicEqualizer({
+			SETTINGS, DEBUG,
+			audioContext : self.audioContext,
+			source       : self.sourceGain,
+			rangeInputs  : self.elements.eqBands,
+			freqSpans    : self.elements.eqFreqs,
+			loadConfig   : parameters.loadConfig,
+		});
+		self.analyser = new SpectrumAnalyser({
+			SETTINGS, DEBUG,
+			audioContext : self.audioContext,
+			audioSource  : (use_eq ? self.equalizer.output : self.sourceGain),
+			canvas       : self.elements.analyser,
+			fade         : self.analyserFade,
+			loadConfig   : parameters.loadConfig,
+		});
 
-		self.analyser.output.connect(self.outputGain);
+		self.equalizer.output.connect(self.outputGain);
 	}
 
 
@@ -742,7 +786,11 @@ console.log({trigger_entries})
 		}
 
 		self.elements.musicPlayer.classList.toggle('simple', !enable);
-		self.elements.settings   .classList.toggle('pressed', enable);
+		self.elements.advanced   .classList.toggle('pressed', enable);
+
+		const use_eq = true || !isMobileDevice();//... Doesn't belong here, we need advanced control setting
+
+		if (enable) self.createAudioGraph();
 	}
 
 
@@ -751,7 +799,7 @@ console.log({trigger_entries})
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.saveSettings = function() {
-		if (DEBUG) console.log('Saving settings to localStorage: %c' + STORAGE_KEY, 'color:#c40');
+		if (DEBUG.STORAGE) console.log('Saving settings to localStorage: %c' + STORAGE_KEY, 'color:#c40');
 		const data = {
 			volume    : parseFloat(self.elements.volume.value),
 			loopSong  : self.elements.loopSong.classList.contains('pressed'),
@@ -763,11 +811,11 @@ console.log({trigger_entries})
 	}
 
 	this.loadSettings = function() {
-		if (DEBUG) console.log('Loading settings from localStorage: %c' + STORAGE_KEY, 'color:#47f');
+		if (DEBUG.STORAGE) console.log('Loading settings from localStorage: %c' + STORAGE_KEY, 'color:#47f');
 		const json = localStorage.getItem(STORAGE_KEY);
 		if (json) {
 			const data = JSON.parse(json);
-			if (DEBUG) console.log('AudioPlayer: Settings:', data);
+			if (DEBUG.PLAYLIST) console.log('AudioPlayer: Settings:', data);
 			self.volume(data.volume);
 			if (data.loopSong) self.toggleLoopSong(data.loopSong);
 			if (data.loopList) self.toggleLoopList(data.loopList);
@@ -777,7 +825,7 @@ console.log({trigger_entries})
 	}
 
 	this.clearSettings = function() {
-		if (DEBUG) console.log('Settings cleared: %c' + STORAGE_KEY, 'color:red');
+		if (DEBUG.STORAGE) console.log('Storage cleared: %c' + STORAGE_KEY, 'color:red');
 		localStorage.removeItem(STORAGE_KEY);
 	}
 
@@ -790,6 +838,13 @@ console.log({trigger_entries})
 		self.elements = parameters.elements;
 		self.library  = parameters.library;
 
+
+		//
+		self.loadAlbums(self.library.albums);
+		self.loadAlbums(self.library.albums);
+		//
+
+
 		self.loopList = false;
 		self.loopSong = false;
 		self.playing  = false;
@@ -798,31 +853,31 @@ console.log({trigger_entries})
 		self.startPlayTime = null;
 		self.totalPlayTime = 0;
 
-		// Audio context
+		// Audio context //
 		self.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 		if (self.audioContext.state == 'suspended') {
 			console.error('Audio context is suspended, trying to resume');
 			self.audioContext.resume();
 		}
 
-		if (DEBUG) console.log(
+		if (DEBUG.AUDIO_CONTEXT) console.log(
 			'AudioPlayer.init: Context', self.audioContext.state,
 			'at', self.audioContext.sampleRate, 'Hz,',
 			self.audioContext.destination.maxChannelCount, 'output channels',
 		);
 
-		// Audio element
-		// Waveform will listen to the canplaythrough event
-		self.audio = new Audio();
-		if (parameters.autoStart) {
-			self.audio.setAttribute('autoplay', 'true');
-		} else {
-			self.audio.setAttribute('preload', 'auto');
-		}
+
+		//
+		self.audio = new Audio();   // <audio> element, waveform will listen to the canplaythrough event
+		//
+
+
+		self.audio.setAttribute(...(parameters.autoStart ? ['autoplay', 'true'] : ['preload', 'auto']));
+
 		self.audio.addEventListener('timeupdate', on_timeupdate);
 		self.audio.addEventListener('ended'     , on_ended);
 
-		if (DEBUG) {
+		if (DEBUG.AUDIO_EVENTS) {
 			const events = [
 				'abort',
 				'canplay',
@@ -856,14 +911,23 @@ console.log({trigger_entries})
 		self.outputGain .connect(self.fadeOutGain);
 		self.fadeOutGain.connect(self.audioContext.destination);
 
-		// Analyser and Equalizer
-		self.analyserFade = true;
-		self.createAudioGraph();
-
 		self.volume(self.elements.volume.value);
 
-		// Waveform
-		self.waveform = await new Waveform(self.audioContext, self.audio, self.elements.waveform).catch(wiggleREJECT);
+
+		//
+		self.analyserFade = true;
+		self.createAudioGraph();
+		//
+
+		//
+		self.waveForm = await new Waveform({
+			SETTINGS, DEBUG,
+			audioContext : self.audioContext,
+			audioElement : self.audio,
+			canvas       : self.elements.waveForm,
+		});
+		//
+
 
 		// UI Events
 		self.elements.play       .addEventListener('click'    , on_play_click);
@@ -874,8 +938,7 @@ console.log({trigger_entries})
 		self.elements.loopSong   .addEventListener('click'    , on_loop_song_click);
 		self.elements.loopList   .addEventListener('click'    , on_loop_list_click);
 		self.elements.config     .addEventListener('click'    , on_config_click);
-		self.elements.settings   .addEventListener('click'    , on_settings_click);
-
+		self.elements.advanced   .addEventListener('click'    , on_advanced_click);
 		self.elements.playlist   .addEventListener('click'    , on_playlist_click);
 		self.elements.import     .addEventListener('click'    , on_import_click);
 		self.elements.filterForm .addEventListener('submit'   , on_filter_click);
@@ -886,12 +949,12 @@ console.log({trigger_entries})
 		self.elements.volume     .addEventListener('input'    , on_volume_change);
 		self.elements.progress   .addEventListener('mousedown', on_seek_drag_start);
 		self.elements.progress   .addEventListener('mouseup'  , on_seek_drag_done);
-		self.elements.waveform   .addEventListener('mousedown', on_waveform_mousedown);
+		self.elements.waveForm   .addEventListener('mousedown', on_waveform_mousedown);
 
-		on_horizontal_wheel_scroll(self.elements.albumList);
+		on_horizontal_wheel_scroll(self.elements.albumlist);
 
 		// Add padding, when content overflows and a scrollbar appears
-		observe_scrollability(self.elements.albumList);
+		observe_scrollability(self.elements.albumlist);
 		observe_scrollability(self.elements.playlist);
 		observe_scrollability(self.elements.lyrics);
 
@@ -899,24 +962,25 @@ console.log({trigger_entries})
 		if (USE_UPDATE_TIMER) on_timestamp_update();   // Start (faster than ontimeupdate) timeout loop
 
 		const is_simple = self.elements.musicPlayer.classList.contains('simple');
-		self.elements.settings.classList.toggle('pressed', !is_simple)
+		self.elements.advanced.classList.toggle('pressed', !is_simple)
 
 		// Settings
-		if (parameters.loadConfig !== false) {
+		if (DEBUG.CLEAR_STORAGE) {
+			self.clearSettings();
+		} else {
 			self.loadSettings();
 			addEventListener('beforeunload', self.saveSettings);
-		} else {
-			self.clearSettings();
 		}
 
 		on_filter_click({ 'preventDefault': ()=>{} });//...ugly Load initial song list (all)
+		self.stop();
 
 		// Autoplay
 		//if (parameters.autoStart) //...self.play();
 		//...###if (parameters.autoStart) setTimeout(() => self.play());
 
 		// Debug
-		if (DEBUG) window.PLAYER = self;
+		if (DEBUG.ENABLED) window.PLAYER = self;
 	}
 
 
