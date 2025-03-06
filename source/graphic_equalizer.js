@@ -12,8 +12,8 @@ export function GraphicEqualizer(parameters) {
 
 	const {
 		SETTINGS, DEBUG,
-		audioContext, source, rangeInputs, freqSpans,
-		loadConfig,
+		audioContext, source, container, rangeInputs, freqSpans,
+		clearConfig,
 	 } = parameters;
 
 	const {
@@ -79,36 +79,29 @@ export function GraphicEqualizer(parameters) {
 	}
 
 	function on_band_reset(event) {
-		if (event.shiftKey === true || event.ctrlKey == true || event.button === 1) {
-			return;
-		}
+		if (event.button != 2 || event.ctrlKey || event.altKey) return;
 
-		switch (event.button) {
-			case 0: {
-				return;
-			}
-			case 1: {
-				self.reset();
-				break;
-			}
-			case 2: {
-				event.target.value = 0;
-				on_band_input(event);
-				break;
-			}
+		if (event.shiftKey) {
+			self.reset();
+		} else {
+			event.target.value = 0;
+			on_band_input(event);
 		}
-
-		event.preventDefault();
 	}
 
 	function prevent_context_menu(event) {
-		if (event.shiftKey === true || event.ctrlKey === true) {
-			return;
+		if (event.target.type == 'range') {
+			event.preventDefault();   // Don't interfere with on_band_reset
 		}
-
-		event.preventDefault();
 	}
 
+
+	function on_touchmove(event) {
+		if (event.target.tagName != 'INPUT') {
+			//... Kills ALL touch. We need to just not scroll
+			//...event.preventDefault();
+		}
+	}
 
 	this.reset = function() {
 		rangeInputs.forEach((input, index) => {
@@ -123,17 +116,21 @@ export function GraphicEqualizer(parameters) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.saveSettings = function() {
-		if (DEBUG.STORAGE) console.log('Saving settings to localStorage: %c' + STORAGE_KEY, 'color:#c40');
+		if (DEBUG.STORAGE) console.log(
+			'%cSaving settings%c to localStorage: ' + STORAGE_KEY, 'color:#c40', 'color:unset',
+		);
+
 		const data = [...rangeInputs].map(input => parseFloat(input.value));
 		const json = JSON.stringify(data);
 		localStorage.setItem(STORAGE_KEY, json);
 	}
 
 	this.loadSettings = function() {
-		if (DEBUG.STORAGE) console.log('Loading settings from localStorage: %c' + STORAGE_KEY, 'color:#47f');
-
 		const json = localStorage.getItem(STORAGE_KEY);
 		if (json) {
+			if (DEBUG.STORAGE) console.log(
+				'%cLoading settings%c from localStorage:' + STORAGE_KEY, 'color:#47f', 'color:unset',
+			);
 			const values = JSON.parse(json);
 			values.forEach((value, index) => {
 				set_filter(index, value);
@@ -144,7 +141,8 @@ export function GraphicEqualizer(parameters) {
 
 	this.clearSettings = function() {
 		localStorage.removeItem(STORAGE_KEY);
-		if (DEBUG.STORAGE) console.log('Storage cleared: %c' + STORAGE_KEY, 'color:red');
+
+		if (DEBUG.STORAGE) console.log('%cStorage cleared:%c ' + STORAGE_KEY, 'color:red', 'color:unset');
 	}
 
 
@@ -163,6 +161,7 @@ export function GraphicEqualizer(parameters) {
 		}
 		self.output.disconnect();
 
+		container.removeEventListener('touchmove'  , on_touchmove);
 		rangeInputs.forEach(i => {
 			i.removeEventListener('input'      , on_band_input);
 			i.removeEventListener('wheel'      , on_band_wheel);
@@ -171,9 +170,8 @@ export function GraphicEqualizer(parameters) {
 		});
 		removeEventListener('beforeunload', self.saveSettings);
 
-		if (DEBUG.CLEAR_STORAGE) self.clearSettings; else self.saveSettings();
-
-		if (DEBUG.ENABLED) console.log('GraphicEqualizer: exit', self.instanceNr);
+		if (!clearConfig) self.saveSettings();
+		if (DEBUG.INSTANCES) console.log('GraphicEqualizer: exit', self.instanceNr);
 	}
 
 	this.init = function() {
@@ -243,12 +241,17 @@ export function GraphicEqualizer(parameters) {
 
 		// Event handlers
 
+		container.addEventListener('touchmove', on_touchmove);
+
 		rangeInputs.forEach((r, i) => {
 			r.dataset.index = i;
 			r.addEventListener('input'      , on_band_input);
-			//...r.addEventListener('wheel'      , on_band_wheel);
 			r.addEventListener('mousedown'  , on_band_reset);
 			r.addEventListener('contextmenu', prevent_context_menu);
+
+			if (SETTINGS.CUSTOM_SLIDERS.WHEEL_EQ) {
+				r.addEventListener('wheel', on_band_wheel);
+			}
 
 			const span = freqSpans[i];
 			const f = frequencies[i];
@@ -265,7 +268,7 @@ export function GraphicEqualizer(parameters) {
 			set_filter(i, parseFloat(r.value));
 		});
 
-		if (DEBUG.CLEAR_STORAGE) {
+		if (clearConfig) {
 			self.clearSettings();
 		} else {
 			self.loadSettings();

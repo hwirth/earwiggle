@@ -29,7 +29,8 @@
 		border-radius:50%; margin-bottom:1em; padding:1px 2px 2px;
 		--c:#f008; box-shadow:0 0 0 4px var(--c); animation:LOADING 2.66s infinite;
 	}
-	.noscript pre { font-size:0.82em; }
+	.noscript .stack { text-align:left; }
+	.noscript pre { font-size:0.82em; margin:0 0 1em; }
 	@keyframes LOADING {
 		0%   { transform:translate(0, 0    ) scaleX( 1) scaleY(  1 ); --c:#ddbb33; }
 		25%  { transform:translate(0, 0.2em) scaleX(-1) scaleY(0.9 ); --c:#44bb48; }
@@ -39,9 +40,8 @@
 	}
 	iframe {
 		display:block; width:100vw; max-width:80em; border:none; margin:1em 0 0;
-		height:min(max(calc(100vh - 20rem), calc(17px * 5)), calc(17px * 45));
+		height:min(max(calc(100vh - 25rem), calc(17px * 5)), calc(17px * 25));
 	}
-
 
 </style><script class="noscript">
 
@@ -56,19 +56,22 @@
 		console.log('<<%c BOOTING %c>>', 'color:red', 'color:unset');
 	});
 
-</script>*/?><script src="boot.js" type="module"></script></head><body class="Xbooting custom_range_inputs">
+</script>*/?><script src="boot.js" type="module"></script></head><body class="custom_range_inputs">
 
 	<div class="noscript">
 		<img src="image/earwiggle_icon.png" width="64" height="64" alt="Earwiggle Icon">
 		<h1>Earwiggle</h1>
 		<p>Please enable JavaScript</p>
 	</div>
-	<script class="noscript"> document.querySelector('.noscript p').innerText = 'Initializing...' </script>
+	<script class="noscript">document.querySelector('.noscript p').innerText='Initializing...'</script>
+
 	<div class="hidden">
-		<button accesskey="d" onclick="location.href='?debug'">Debug mode, test sounds</button>
-		<button accesskey="r" onclick="location.href='?reset'">Clear localStorage</button>
-		<button accesskey="l" onclick="document.body.classList.toggle('light')">Light Mode</button>
-		<button accesskey="q" onclick="window.open('/tools/qrcode/show.php?text=' + location.href)">QR link to this page</button>
+		<button onclick="location.href='?debug'"                                        accesskey="d">Debug mode, test sounds</button>
+		<button onclick="location.href='?reset'"                                        accesskey="r">Clear localStorage</button>
+		<button onclick="location.href='?'"                                             accesskey="a">Remove ?reset from address</button>
+		<button onclick="document.body.classList.toggle('light')"                       accesskey="l">Light Mode</button>
+		<button onclick="window.open('/tools/qrcode/show.php?text='+location.href)"     accesskey="q">QR link to this page</button>
+		<button onclick="document.querySelectorAll('.noscript').forEach(n=>n.remove())" accesskey="x">Remove splash screen</button>
 	</div>
 
 </body></html>

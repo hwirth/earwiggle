@@ -1,7 +1,7 @@
 <?php
 	$tabSize = isset($_GET['tabsize']) ? 1*$_GET['tabsize'] : 8;
 	$file    = isset($_GET['file']) ? $_GET['file'] : '';
-	$clean   = preg_replace('/[^a-zA-Z0-9_\-\.\:\#]/', '', $file);
+	$clean   = preg_replace('/[^a-zA-Z0-9_\-\.\:\#\?]/', '', $file);
 	if ($clean !== $file) {
 		http_response_code(400);
 		die('Illegal characters in ?file= - only use a-z, A-Z, 0-9 or _-.:');

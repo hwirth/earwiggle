@@ -36,7 +36,7 @@
 * { margin:0; padding:0; box-sizing:border-box; font-size:1em; min-width:0; min-height:0; }
 html, body { height:100%; }
 html { background:var(--page-bg-color); color:var(--text-color); }
-body { font-family:sans-serif; font-size:15px; transition:background-color 0.125s ease-in-out; }
+body { font-family:sans-serif; font-size:15px; transition:background-color 0.125s ease-in-out; padding:0 0 0.5em; }
 
 
 /* Light Mode */
@@ -48,23 +48,36 @@ body.light button.pressed,
 body.light button.pressed,
 html:has(body.light) { filter:hue-rotate(180deg) invert(1); }
 html:has(body.light) img  { filter:invert(1) hue-rotate(180deg); }
-html:has(body.light) .audio_player { --analyser-filter:hue-rotate(120deg); }
+html:has(body.light) .audio_player { --analyser-filter-fade:hue-rotate(120deg); }
 @media (prefers-color-scheme: light) {
-	.audio_player { --analyser-filter:hue-rotate(120deg); }
+	.audio_player { --analyser-filter-fade:hue-rotate(120deg); }
 }
 
 
 /* Generic Content */
 
 :focus {
-	outline:solid 1px var(--focus-color);
+	outline:none;
+	box-shadow:inset 0 0 0 1px var(--focus-color);
+	Xoutline:solid 1px var(--focus-color);
+	Xfilter:brightness(1.15);
 }
-
+/*
 .album_cover a:focus,
-:focus:is(button, [type=text]):not(.controls *) {
-	outline:solid 2px var(--focus-color);
+:not(.controls):is(button, [type=text]):focus {
+	box-shadow:inset 0 0 0 1px var(--focus-color);
+	--Xinput-pressed-bg           : #ffe;
+	--Xinput-pressed-shadow-color : #fff8;
+	Xfilter:none;
 }
-
+*/
+.audio_player .controls button:focus {
+	box-shadow:inset 0 0 0 1.5px var(--focus-color);
+	Xbox-shadow:none;
+	--Xinput-pressed-bg           : #ffe;
+	--Xinput-pressed-shadow-color : #fff8;
+	Xfilter:none;
+}
 
 
 h1 {
@@ -98,6 +111,8 @@ a:hover { text-decoration:underline; }
 pre { font-family:monospace,monospace; font-size:1em; }
 
 abbr[title] { cursor:help; }
+
+table { border-collapse:collapse; }
 
 
 /* Generic Form Inputs */
@@ -135,8 +150,12 @@ body.wake_lock iframe {
 	filter:brightness(1) grayscale(0);
 }
 */
+body iframe.starfield {
+	--r:0deg;
+	position:fixed; top:0; left:0; z-index:-1;
+	width:100%; height:100%; border:none;
+}
 
-body:not(.wake_lock) .now_playing h2 { color:#ccb; }
 body.wake_lock iframe.starfield {
 	Xfilter:sepia(1) saturate(8) brightness(0.75) hue-rotate(var(--r));
 	Xfilter:sepia(1) saturate(8) brightness(3) hue-rotate(-180deg);
@@ -145,41 +164,32 @@ body.wake_lock.starfield .audio_player {
 	--playlist-item-bg  : var(--playlist-item-bg-stars);
 	--playlist-hover-bg : var(--playlist-hover-bg-stars);
 }
-body iframe.starfield {
-	--r:0deg;
-	position:fixed; top:0; left:0; z-index:-1;
-	width:100%; height:100%; border:none;
-	animation:STARFIELD 4s linear infinite;
-	Xfilter:sepia(1) saturate(0.25) brightness(0) hue-rotate(0deg);
-	filter:brightness(0.75);
-	transition:filter 0.25s linear;
-}
-@keyframes STARFIELD {
-	0%   { --r:   0deg; }
-	12%  { --r:  60deg; }
-	25%  { --r: 180deg; }
-	33%  { --r:  60deg; }
-	50%  { --r:   0deg; }
-	66%  { --r: -60deg; }
-	75%  { --r:-180deg; }
-	85%  { --r: -60deg; }
-	100% { --r:   0deg; }
-}
+Xbody:not(.wake_lock) .now_playing h2 { color:#abc; }
 
 
 .debug * { outline:dashed 1px #0fc; }
 .debug_stats:not(.hidden) {
+	--p:32px;
 	display:block; overflow:auto;
-	position:absolute; z-index:10;
+	position:fixed; z-index:10;
 	top:0; left:0; width:100vw; height:100vh;
+	Xpadding:0.25em 0 0 calc(var(--p) + 1em);
+	padding:0.25em 0.5em;
 	background:var(--debug-stats-bg); color:var(--debug-stats-color);
 	text-shadow:var(--stats-text-shadow);
-	font-family:monospace,monospace; font-size:12px;
+	font-family:monospace,monospace; font-size:11px;
 	text-align:left; line-height:1;
-	font-family:monospace,monospace; font.size:1em;
-	Xpointer-events:none;
 }
-
+.debug_stats * { margin:0; padding:0; }
+.debug_stats header { display:block; margin-bottom:1em; }
+.debug_stats :is(h1,.logo,form) { display:inline; }
+.debug_stats .logo { margin-bottom:-8px; }
+.debug_stats pre { display:inline-block; vertical-align:top; margin-right:2em; height:100%; max-height:calc(100% - 6em); overflow-y:auto; }
+.debug_stats b { color:var(--text-color); }
+.debug_stats input { padding:3px 5px; border:none; box-shadow:none; background:#222; color:#fff; }
+.debug_stats input:focus { outline:none; border:none; }
+.debug_stats [type=text] { width:20em; font-size:1.25em; }
+.debug_stats button { padding:3px 5px; }
 
 /*EOF*/
 

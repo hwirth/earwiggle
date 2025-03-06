@@ -1,38 +1,70 @@
-"Analyser" not "Analyzer" (because the Web Audio node is named like so) but Equalizer! (AE preferred)
+
+                                                 EARWIGGLE MUSIC PLAYER
+                                      ===========================================
+                                      copy(l)eft - 2024 - https://harald.ist.org/
+                                      ===========================================
+                                              README for version proto2.3
+
+
+STATE OF THE PROGRAM
+====================
+After applying bugfix after bugfix, the proto2.3 source has become quite a mess. I need to abstract more, especially
+manageing the audio graph more independently (instead of blindly regenerating it constantly) and the playlist
+(start/skip, select items, etc) could benefit from becoming its own module, too.
+
+FUTURE WORK
+-----------
+* PlayList() manages current song
+* AudioPlayer() deals audio graphs and actual playback
+* Attach/detach <audio> sources from the graph without glitches (fade volume, change nr. of tracks irritates the EQ)
+* Use of <template> and proper component management (add/remove something with a canvas is a mess atm)
+
+
+IMPORTANT NOTES
+===============
+It's "AnalySer" not "AnalyZer" (because the Web Audio node is named like so) but EqualiZer! (AE preferred)
 grep for comments like //... (Things not yet properly done or polished)
 
 
 BOOT PROCESS
 ============
-index.html   Made to load quickly and show a spash screen. Errors while initializing are shown to the user
+index.html   Made to load quickly and show a slpash screen. Errors while initializing are shown to the user
 boot.js      Prepares the browser so the actual application can start (Audio autoplay, unhandled rejections)
 main.js      The actual Earwiggle Music Player
 
 
 FILES
 =====
-index.html
-constants.js                 SETTINGS and DEBUG
-boot.js
-helpers.js
-main.js
-music_library.js
-song_data.js
-audio_player.js
-waveform.js
-graphic_equalizer.js
-spectrum_analyser.js
-scripts/create_thumbnails.sh  Resizes from ../fullsize_covers/* to ../{covers|thumbnails}/*.jpg
-covers/*.jpg                  Shown for the current song (large)
-thumbnails/*.jpg              Used in the album list (small)
-covers/UPLOAD_FILE.png        Manually placed. Watch out when deleting covers or thumbs!
-covers/LOCAL_FILE.png
-thumbnails/UPLOAD_FILE.png
-thumbnails/LOCAL_FILE.png
+index.html                    Splash screeen, loads boot.js
+audio_player.html             Earwiggle Markup
+main.css                      Generic element styles (text, buttons, ...)
+audio_player.css              Player styles (most of everything here)
+custom_input.css              Scrollbars and range inputs
+variables.css                 Player colors and sizes, spectrum analyser mode parameters
+constants.js                  SETTINGS and DEBUG
+boot.js                       Deal with browser oddities, global error handlers. Instantiates a new Application()
+helpers.js                    Generic things like getCSSvar, triggerDownload, prefersReducedMotion
+main.js                       Application() object template, instantiates new AudioPlayer(), new MusicLibrary()
+music_library.js              Interface to the (not existing) database
+song_data.js                  Hard coded music meta data (Title, link to mp3, ...)
+audio_player.js               Playlist, <audio>. new WaveForm(), new GraphicEqualizer(), new SpectrumAnalyser()
+waveform.js                   Renders time domain
+graphic_equalizer.js          Filter/boost frequencies
+spectrum_analyser.js          Renders frequency domain
+show_source.php               Displays the source code of a file and highlights a certain line (Splash screen)
+fullsize/                     Original images for album covers
+scripts/create_thumbnails.sh  Resizes from ../fullsize/* to ../{covers|thumbnails}/*.jpg
+covers/                       Shown for the current song (large)
+thumbnails/                   Used in the album list (small)
+waveforms/                    Waveforms are rendered from fetched mp3 files unless already cached here
 fonts/                        Webfonts
 image/                        Icons (eg. player buttons CSS sprite)
 music/                        Music files (mp3, ogg, ...)
 test/                         Noise and sine sweep files (wav, ogg)
+covers/UPLOAD_FILE.png        Manually placed. Watch out when deleting covers or thumbs for regeneration
+covers/LOCAL_FILE.png
+thumbnails/UPLOAD_FILE.png
+thumbnails/LOCAL_FILE.png
 
 
 MODE OF OPERATION
@@ -51,6 +83,12 @@ Hardcoded Icons
 PNG for items matching [data-trigger] hardcoded to allow floating icons for the Local File album and playlist entries,
 normally, *.jpg is assumed.
 
+Create Waveform Cache
+---------------------
+./waveforms/store_waveform.php?hash=<choose a password>
+vim ./waveforms/store_waveform.php # Enter hash
+Load player, Alt+T, enter password, Alt+T, click songs and wait for each waveform to render and upload
+
 
 DEBUG
 =====
@@ -61,95 +99,109 @@ Or run your local server as harald.ist.neu using /etc/hosts, then debug is opt-o
 - "Global" objects in  window.{PLAYER,EQ,WIGGLE_REJECT}
 
 
+PROBLEMS
+========
+[ ] Seek on <audio> always triggers an oncanplaythrough, which resets the cursor in the waveform (seeking while paused)
+[ ] AudioContext now happily works even when it remains suspended? I suspect <audio> does some weird magic
+[ ] Grid eats bottom padding occasionally (I think when the page is forced to overflow?)
+[ ] Firefox sizes boxes weirdly, when they overflow and scrollbars are needed (overlaps content).
+    Solved with JS through observe_scrollability() by adding class .scrolling
+
+
+WHAT I LEARNED
+==============
+[ ] Don't call event handlers directly, can result in unexpected couplings. Add a facility for the function instead.
+
+
 TODO
 ====
-[ ] Lyrics missing in middle layout; Show and move down 100vh, so the user needs to scroll one page down
-[ ] Zoom 2 columns with advanced controls:  Scroll playlist should also scroll page (when from bottom up)
-[?] Albums: Drag instead of mousewheel - what about eq sliders
-[ ] Tab-index: Start at stop button (So user can tab once and start playing)
-[E] show_source.php: Lightmode in <iframe> not working (viator)
-[ ] Dragon's Vow: "... not far from the fight"
-[ ] Upload entry breaks playlist continuation
-[ ] Re-nest player markup, use grid with display:contents
-[E] MYSTERY MARGIN: .controls needs overflow:hidden, or it adds horizontal margin to the player, when small layout
-[ ] EQ: Shift+Right click = reset all
-[\] Loop Song: Only auto-skip, buttons allow next song
-[ ] Player Phone Mode: Main controls fixed to top
-[ ] Waveform click: Modes (oscillogram, animated, 5 zoom steps)
-[ ] <picture> multiple resols, update the script
-[!] Dict visibilities for sections
-[E] data-trigger="undefined" (found in inspector)
-[ ] Playlist manager: skip upload/triggers
-[ ] iframe.starfield: fade in correctly when new song starts, manage fading
-[ ] Albums: Drag with mouse-scroll
-[E] Middle click does not reaset EQ
-[ ] Click on playing song in playlist: pause/resume
-[ ] toggle lyrics via class, remove <h2>Lyrics</h2> when none
-[ ] Now Playing + Cover + Comment: min 100vh
-[ ] Hide lowest row in .controls when .simple
-[ ] <a> colors same as bootscreen colors
-[!] Need to click Stop to halt animations on start, should be able to start disabled and toggle willingly,
-    same as rAF updates with uninitialized canvases, sound should reconnect anytime
-[!] Filter: "artist:Hjalvandar"
-[!] Waveform: Cache waves (RAM)
+[ ] loadSettings only sets/toggles if there's a json in storage. Needs to set defaults otherwise
+[ ] Spacebar -> Play/pause
+[ ] Reactivate Reduced Motion, use bars analyser for redmot initially
+[!] Base volume to settings storage
+[ ] Save settings: Don't do in modules, only when main exits
+[ ] Waveform: Click not showing pos indicator, when not playing (waits for time update)
+[ ] Waveform: Don't fetch all waveforms initally, only when song loaded
 
-[?] Button and inputs make sound
-[ ] Fade on play/seek/skip
-[ ] Move CSS vars from :root to .audio_player
-[ ] Scales for volume slider (soft, mid, loud)
+[ ] Fade: Seek: While playing: Fade (actually, always fade)
+[ ] Fade: on play/seek/skip
+[?] Library: Sort alphabetically
+[ ] Waveform: click: Modes (oscillogram, animated, 5 zoom steps)
+[ ] SpectrumAnalyser: cache spectrum as img
+[e] Added border on canvas (mainly analyser) now hides pixels (lower end, there's some extra offset too)
+
 [ ] Pause on inactivity: (Option) Halt everything when not in focus
-[ ] Filter: Buttons Filter, All Songs illuminated
-[ ] Check all property introducers (this.thing; below const self = this)
+[E] show_source.php: Lightmode in <iframe> not working (viator)
+[?] Zoom 2 columns with advanced controls:  Scroll playlist should also scroll page (when from bottom up)
+[f] Lyrics missing in middle layout; Show and move down 100vh, so the user needs to scroll one page down
+[?] Stop: stops. Click again: stop playlist = goto first entry and stop
+[ ] Dragon's Vow: Says something like "... not far from the fight" instead of "I'll stand with pride" the first time
+[E] Window width < 300px: Elements center and squeeze weirdly, can't set a min-width for some reason
+[ ] Combine/fix: [data-index] and [data-song-id]
+[#] Play songs back to back without delay - Oxygene
+
+Select playlist items/albums
+----------------------------
+[e] Select initial song in playlist for ?playsong=n
+[!] Playlist: Duration, Genre
+[!] Download Icon
+[ ] Albumlist: Filter according to term, show something for not matches
+[E] Albumlist/Playlist: Album selected needs to scroll into view when song in playlist (filter celeared) clicked
+[E] Albumlist/Playlist: Album selected with playing song needs to select the song
+[ ] Current album:brighter/thicker border
+[ ] Filter also selects/focuses album
+[\] Playlist progresses, "clicks" album (focus for 200ms) without changing filter results
+[ ] span.timestamp -> <time> ==> use it correctly (check specs)
+
+Filter
+------
+[ ] Buttons Filter, All Songs illuminated
+[ ] artist:*, title:*, "and" "or" "not"
+[ ] ?filter=artist:Hjalvandar
+
+Custom Playlist
+---------------
+[ ] Playlist: Custom playlists
+[ ] Dragdrop reorder playlist
+
+Starfield
+---------
+[E] Stars mode not saved?
+[?] Integrate starfield
+[ ] iframe.starfield: fade in correctly when new song starts, manage fading
+
+Refactor
+--------
+[!] Dict visibilities for sections
 [ ] Global rAF manager: Checks visibility before calling registered render functions
 [ ] Global rAF manager: is_canvas_sized
-[ ] span.timestamp -> <time>
 [#] Get rid of WIGGLE_REJECT
-[ ] body.initializing - not going away - providing text-align:Center to albums
-[ ] Extra padding/margin for focus outline creates issues
-[ ] Move variables to .audio_player (keep them private to us), rename --player-* (--player-items too specific)
-[ ] Controls: Play button when nothing yet selected starts first visible
-[#} When Local Files clicked, remain until album clicked, and use filter for local only
-[#] Local Files: remove icon
-[ ] Save settings: Don't do in modules, only when main exits
-[?] Integrate starfield
-[E] Playlist not looping, ends: Stop not pressed
-[E] Custom range inputs on iOS not working
-[ ] Albumlist: Top div artist:*, bottom album:*
-[ ] Dragdrop reorder playlist
-[ ] ?filter=artist:Hjalvandar
-[E] Albumlist: Not updating when new albums added (upload)
-[!] Albumlist: Filter according to term, show something for not matches
-[E] Albumlist/Playlist: Album selected needs to scroll into view when on full list (filter celeared) clicked
-[E] Albumlist/Playlist: Album selected with playing song needs to select the song
-[E] Pause while Stopped
-[#] Playlist progresses, "clicks" album (focus for 200ms) without changing filter results
-[#] Enter "clicks" items, analyser; Cursor keys for seek on waveform (tabindex)
-[ ] Cursor keys unused axis: focus next element, or change grid section (album <-> filter <-> playlist
-[*] Filter also selects/focuses album
-[*] Current album:brighter/thicker border
-[ ] Adding local files does not add an album
-[!] Tabindex + Focus
-[ ] Library: Sort alphabetically
+[ ] Move CSS vars from :root to .audio_player (keep them private to us), rename --player-* (--player-items too specific)
 [ ] MusicLibrary: Refactor to work better once a backend exists (Update playlist)
-[!] Playlist: Duration, Genre
-[ ] Playlist: Custom playlists
-[?] Waveform: Render wave progressively, as the data comes in
-[?] Filter: multiple terms, comma separated
-[ ] Loop/play by selecting playlist items (checkbox)
-[ ] SA: Waterfall mode
-[ ] SA: Draw frequencies logarithmically (strech base)
-[?] SA: Stop/Pause: Fade out/in
-[?] EQ: Presets, save, per song
-[?] EQ: Q-Value input: Factor
-[?] EQ: Q-Value input: Fixed/algorithmic
-[?] EQ: Bands: Linear, preset, algorithmic
-[?] EQ: Bands: Amount
-[ ] Download Icon
-[ ] Clipping LED
-[?] Lyrics: Timestamps (Karaoke)
 [e] Spectrum Analyser: x-calculations still not 100% correct
-[?] Volume normalizing (Scan, adjust; Requires full load)
-[?] Loop Song: Use <audio loop>
+[ ] Re-nest player markup, use grid with display:contents
+
+Optional
+--------
+[ ] Filter: multiple terms, comma separated
+[ ] Albums: Drag with mouse-scroll
+[?] Albums: Drag instead of mousewheel - what about eq sliders
+[ ] Lyrics: Timestamps (Karaoke)
+[\] Volume normalizing (Scan, adjust; Requires full load)
+[ ] Loop Song: Use <audio loop>
+[\] Waveform: Render wave progressively, as the data comes in
+[\] Cursor keys unused axis: focus next element, or change grid section (album <-> filter <-> playlist
+[\] Click on playing song in playlist: pause/resume
+[\] Clipping LED
+[?] Button and inputs make sound
+
+Cleanup
+-------
+[?] Tabindex + Focus
+[ ] Check all property introducers (this.thing; below const self = this)
+[E] MYSTERY MARGIN: .controls needs overflow:hidden, or it adds horizontal margin to the player, when small layout
+[ ] <a> colors same as bootscreen colors
+
 
 
 Code Parking Space
@@ -195,3 +247,96 @@ You can safely ignore the rest of this file.
     font-style: normal;
     font-display: swap;
 }
+
+
+
+
+
+
+
+// Setup WebGL and Shader
+function setupWebGL() {
+	const canvas = document.createElement('canvas');
+	const gl = canvas.getContext('webgl');
+	document.body.appendChild(canvas);
+
+	const vertexShaderSource = `
+		attribute vec2 a_position;
+		void main() {
+			gl_Position = vec4(a_position, 0.0, 1.0);
+		}
+	`;
+
+	const fragmentShaderSource = `
+		precision mediump float;
+		uniform float u_freqData[256];
+		void main() {
+			float angle = atan(gl_FragCoord.y - 0.5, gl_FragCoord.x - 0.5);
+			float freq = u_freqData[int(mod(angle / 6.2831853 * 256.0, 256.0))];
+			gl_FragColor = vec4(vec3(freq), 1.0);
+		}
+	`;
+
+	const compileShader = (source, type) => {
+		const shader = gl.createShader(type);
+		gl.shaderSource(shader, source);
+		gl.compileShader(shader);
+		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+			console.error(gl.getShaderInfoLog(shader));
+		}
+		return shader;
+	};
+
+	const vertexShader = compileShader(vertexShaderSource, gl.VERTEX_SHADER);
+	const fragmentShader = compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+
+	const program = gl.createProgram();
+	gl.attachShader(program, vertexShader);
+	gl.attachShader(program, fragmentShader);
+	gl.linkProgram(program);
+	gl.useProgram(program);
+
+	const a_position = gl.getAttribLocation(program, 'a_position');
+	const u_freqData = gl.getUniformLocation(program, 'u_freqData');
+
+	const vertices = new Float32Array([-1, -1, 1, -1, 0, 1]);
+	const vertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+	gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(a_position);
+
+	return { gl, program, u_freqData };
+}
+
+// Update function for Analyser Node data
+function updateShaderWithFrequencyData(analyser, gl, u_freqData) {
+	const bufferLength = analyser.frequencyBinCount;
+	const dataArray = new Uint8Array(bufferLength);
+	analyser.getByteFrequencyData(dataArray);
+
+	gl.uniform1fv(u_freqData, dataArray);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+	<div class="hidden">
+		<button onclick="location.href='?debug'"                                        accesskey="d">Debug mode, test sounds</button>
+		<button onclick="location.href='?reset'"                                        accesskey="r">Clear localStorage</button>
+		<button onclick="location.href='?'"                                             accesskey="b">Remove ?reset from address</button>
+		<button onclick="document.body.classList.toggle('light')"                       accesskey="l">Light Mode</button>
+		<button onclick="window.open('/tools/qrcode/show.php?text='+location.href)"     accesskey="q">QR link to this page</button>
+		<button onclick="document.querySelectorAll('.noscript').forEach(n=>n.remove())" accesskey="x">Remove splash screen</button>
+	</div>

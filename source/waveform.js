@@ -3,24 +3,18 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { clamp, newElement, getCSSvar, format_time, prefersReducedMotion } from './helpers.js';
+import {
+	clamp, newElement, getCSSvar, format_time, prefersReducedMotion, renderDebugDots, changeFileExtension,
+} from './helpers.js';
 
-const HOLLOW_INDICATOR = false;
-
-export const waveformCache = new function() {
-	const self = this;
-
-	this.waveforms = {};
-
-	this.add = (key, w) => self.waveforms[key] = w;
-	this.remove = (w) => self.waveforms[w] && delete self.waveforms[w];
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // STATIC
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 let WAVE_CACHE = {};
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // OBJECT TEMPLATE
@@ -30,7 +24,8 @@ export const Waveform = function(parameters) {
 	const self = this;
 
 	const { SETTINGS, DEBUG } = parameters;
-	const { audioContext, audioElement, canvas } = parameters;
+	const { HOLLOW_INDICATOR, PRE_CACHE_WAVES, INSET_BORDER } = SETTINGS.WAVE_FORM;
+	const { audioContext, audioElement, canvas, adminPassword, waveFileNames } = parameters;
 
 	let ctx = null;   // Canvas 2d context
 
@@ -40,40 +35,101 @@ export const Waveform = function(parameters) {
 	this.rendering;
 	this.hollowIndicator;
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// RENDER
+// WAVE FORM CACHE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function wave_cache_key(filename) {
+		return changeFileExtension(
+			decodeURIComponent(filename.split('/').pop())
+		, '.png');
+	}
+
+
+	function init_wave_cache(file_names) {
+		file_names.forEach(f => {
+			const key = wave_cache_key(f);
+
+			fetch('waveforms/' + f)
+			.then(response => response.blob())
+			.then(blob => {
+				const canvas = document.createElement('canvas');
+				const ctx    = canvas.getContext('2d');
+				const img    = new Image();
+				const reader = new FileReader();
+				reader.onloadend = () => {
+					img.onload = () => {
+						canvas.width = img.width;
+						canvas.height = img.height;
+						ctx.drawImage(img, 0, 0);
+						WAVE_CACHE[key] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+					}
+					img.src = reader.result; // Convert the blob into an image
+				};
+				reader.readAsDataURL(blob); // Convert blob to base64 data URL
+			})
+			.catch(error => {
+				console.error('Error fetching image:', error);
+			});
+		});
+	}
 
 	this.maxX;
 	this.maxY;
-	this.canvasToCache = function() {
-		if (DEBUG.WAVE_FORM) console.log('save: WAVE_CACHE:', key, WAVE_CACHE[key], WAVE_CACHE);
-
+	this.canvasToCache = function(key) {
 		if (!ctx) return;
 
-		const key = audioElement.src;
 		if (key) WAVE_CACHE[key] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+		if (adminPassword.value) canvas.toBlob(blob => {
+			console.log('POSTing waveform cache image', key);
+
+			const formData = new FormData();
+			formData.append('image', blob, 'image.png');
+			formData.append('filename', key);
+			formData.append('password', adminPassword.value);
+
+			fetch('waveforms/store_waveform.php', {
+				method: 'POST',
+				body: formData
+			})
+			.then(response => {
+				if (!response.ok) {
+					console.log(response);
+					throw new Error('Failed to upload: ' + file_name);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+			});
+		});
 	}
 
 	this.canvasFromCache = function() {
-		if (DEBUG.WAVE_FORM) console.log('load: WAVE_CACHE:', key, WAVE_CACHE[key], WAVE_CACHE);
-
 		if (!ctx) return;
 
-		const key = audioElement.src;
+		const key = wave_cache_key(audioElement.src);
 		if (key && WAVE_CACHE[key]) ctx.putImageData(WAVE_CACHE[key], 0, 0);
 
 	}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// DRAW EMPTY WAVE FORM
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.reset = function() {
 		//...if (!canvas.checkVisibility()) return;
 		if (!ctx) return;
 
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		const bg_color = getCSSvar('--waveform-bg');
+		const [w, h] = [canvas.width, canvas.height];
+
+		ctx.clearRect(0, 0, w, h);
+		const bg_color = getCSSvar('--waveform-bg');  //... Don't access CSS here
 		if (bg_color) {
 			ctx.fillStyle = bg_color;
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillRect(0, 0, w, h);
 		}
 
 		ctx.fillStyle = getCSSvar('--waveform-empty-color-1');
@@ -82,7 +138,6 @@ export const Waveform = function(parameters) {
 		const midY = canvas.height / 2;
 		ctx.fillStyle = getCSSvar('--waveform-empty-color-1');
 
-		self.animatedEmptyWave = true;
 		const animated = (self.animatedEmptyWave) ? 1 : 0;
 		const tf1 = Math.PI;
 		const tf2 = -1;
@@ -96,8 +151,13 @@ export const Waveform = function(parameters) {
 			const y1 = f2(x, 7); ctx.fillRect(x, midY-y1, 1, 2*y1);
 		}
 
-		//...self.showProgress(0);
+		if (DEBUG.CANVAS_SIZING) renderDebugDots(canvas, ctx);
 	}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// RENDER
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.showError = function() {
 		self.idleTimeout = false;   // Stop rAF loop
@@ -124,7 +184,9 @@ export const Waveform = function(parameters) {
 		//...if (!canvas.checkVisibility()) return;
 		if (!ctx) return;
 
-		if (WAVE_CACHE[event.target.src]) {
+		const cache_key = wave_cache_key(audioElement.src);
+
+		if (WAVE_CACHE[cache_key]) {
 			self.canvasFromCache();
 			return;
 		}
@@ -134,9 +196,11 @@ export const Waveform = function(parameters) {
 			if (DEBUG.ENABLED) console.log('Waveform aborting fetch:', audioElement.src);
 			self.abortController.abort();
 			self.idleTimeout = false;   // Stop rAF loop
+			self.animatedEmptyWave = false;
 		}
 
 		if (!self.idleTimeout && !prefersReducedMotion()) {
+			self.animatedEmptyWave = !prefersReducedMotion();
 			function on_idle() {
 				if (self.idleTimeout) requestAnimationFrame(on_idle);
 				if (self.animatedEmptyWave) {
@@ -151,7 +215,7 @@ export const Waveform = function(parameters) {
 		let response = null;
 
 		try {
-			if (DEBUG.ENABLED) console.log('Waveform:', decodeURIComponent(audioElement.src.split('/').pop()));
+			if (DEBUG.WAVE_FORM) console.log('Waveform pre-render fetch:', cache_key);
 
 			// Retreive MP3
 			response = await fetch(
@@ -159,7 +223,7 @@ export const Waveform = function(parameters) {
 				{ signal: self.abortController.signal },
 			);
 
-			if (DEBUG.ENABLED) console.log('Waveform response:', response);
+			if (DEBUG.WAVEFORM) console.log('Waveform response:', response);
 			self.abortController = null;
 		}
 		catch (e) {
@@ -195,8 +259,10 @@ export const Waveform = function(parameters) {
 
 		const left_color_max  = getCSSvar('--waveform-left-color-max');
 		const left_color_avg  = getCSSvar('--waveform-left-color-avg');
-		const right_color_max = getCSSvar('--waveform-right-color-max');
-		const right_color_avg = getCSSvar('--waveform-right-color-avg');
+		const mid_color_max   = getCSSvar('--waveform-mid-color-max');
+		const mid_color_avg   = getCSSvar('--waveform-mid-color-avg');
+		const right_color_max = is_stereo ? getCSSvar('--waveform-right-color-max') : left_color_max;
+		const right_color_avg = is_stereo ? getCSSvar('--waveform-right-color-avg') : left_color_avg;
 
 		const stroke_width = 1;
 
@@ -225,19 +291,38 @@ export const Waveform = function(parameters) {
 			const  left_avg_y = sum_left  / samples_per_pixel * midY * 3;
 			const right_avg_y = sum_right / samples_per_pixel * midY * 3;
 
-			function fill(color, x0, y0, w, h) {
-				ctx.fillStyle = color;
-				ctx.fillRect(x0, y0, w, h);
+			function fill(color1, color2, x, y, w, h) {
+				const gradient = ctx.createLinearGradient(x, y, x+w, y+h);
+
+				const upper = (y < canvas.height/2);   // Left channel = upper half of the image
+				gradient.addColorStop(upper ? 0 : 1, color1);
+				gradient.addColorStop(upper ? 1 : 0, color2);
+
+				ctx.fillStyle = gradient;
+				ctx.fillRect(x, y, w, h);
 			}
-			fill( left_color_max, x, midY-left_max_y, stroke_width, left_max_y);  // top left_max
-			fill( left_color_avg, x, midY-left_avg_y, stroke_width, left_avg_y);  // top left avg
-			fill(right_color_max, x, midY, stroke_width, right_max_y);            // btm right_max
-			fill(right_color_avg, x, midY, stroke_width, right_avg_y);            // btm right_avg
+			fill( left_color_max, mid_color_max, x, midY-left_max_y, stroke_width, left_max_y);  // top left_max
+			fill( left_color_avg, mid_color_avg, x, midY-left_avg_y, stroke_width, left_avg_y);  // top left avg
+			fill(right_color_max, mid_color_max, x, midY, stroke_width, right_max_y);            // btm right_max
+			fill(right_color_avg, mid_color_avg, x, midY, stroke_width, right_avg_y);            // btm right_avg
 		}
 
-		console.log(event);
-		self.canvasToCache();
+		// Inset "shadow"
+		if (INSET_BORDER) {
+			const [w, h] = [canvas.width, canvas.height];
+			ctx.strokeStyle = getCSSvar('--page-bg-color');
+			ctx.beginPath();
+			ctx.lineWidth = 1;
+			ctx.rect(0.5, 0.5, w-0.5, h-0.5);
+			ctx.stroke();
+			ctx.lineWidth = 1;
+		}
+
+		self.canvasToCache(cache_key);
+
+		if (DEBUG.CANVAS_SIZING) renderDebugDots(canvas, ctx);
 	}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // PROGRESS INDICATOR
@@ -248,7 +333,10 @@ export const Waveform = function(parameters) {
 		if (!ctx) return;
 
 		const src = WAVE_CACHE[audioElement.src];
-		if (src) self.idleTimeout = false;   // Stop rAF loop
+		if (src) {
+			self.idleTimeout = false;   // Stop rAF loop
+			self.animatedEmptyWave = false;
+		}
 
 		self.canvasFromCache(src);
 		const x = Math.floor((canvas.width - 1) * ratio);
@@ -290,6 +378,7 @@ export const Waveform = function(parameters) {
 		}
 	}
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -299,42 +388,44 @@ export const Waveform = function(parameters) {
 	}
 
 	this.init = async function() {
-		self.rendering   = false;
-		self.idleTimeout = null;   // No initial rAF loop
+		if (DEBUG.WAVEFORM) {
+			console.group('Waveform.init');
+			console.log(canvas.width, canvas.offsetWidth);
+			console.log(canvas.height, canvas.offsetHeight);
+			console.groupEnd();
+		}
 
-		requestAnimationFrame(()=>{
-			if (DEBUG.WAVEFORM) {
-				console.group('Waveform.init');
-				console.log(canvas.width, canvas.offsetWidth);
-				console.log(canvas.height, canvas.offsetHeight);
-				console.groupEnd();
-			}
+		self.rendering         = false;
+		self.idleTimeout       = null;   // No initial rAF loop
+		self.animatedEmptyWave = false;
 
-			if (canvas.checkVisibility()) {
-				canvas.width  = canvas.offsetWidth;
-				canvas.height = canvas.offsetHeight;
-			}
+		if (PRE_CACHE_WAVES) init_wave_cache(waveFileNames);   // Download //...all prerendered waveforms
 
-			try {
-				ctx = canvas.getContext('2d', {
-					willReadFrequently : !true,   //... We dont, but the browser complains
-				});
-				//... Not required for fillRect: ctx.translate(0.5, 0.5);s
+		if (canvas.checkVisibility()) {
+			const padding = parseInt(getCSSvar('--control-padding'), 10);
+			canvas.width  = canvas.offsetWidth - 2*padding;
+			canvas.height = canvas.offsetHeight - 2*padding;
+		}
 
-				if (DEBUG.WAVE_FORM) console.log(
-					'waveform: globalAlpha:', ctx.globalAlpha,
-				);
-			}
-			catch (error) {
-				console.error('Trying to inizialize Waveform canvas failed');
-			}
+		try {
+			ctx = canvas.getContext('2d', {
+				willReadFrequently : !true,   //... We dont, but the browser complains
+			});
+			//... Not required for fillRect: ctx.translate(0.5, 0.5);s
 
-			self.hollowIndicator = false;
-			self.reset();
-			self.showProgress(0);
+			if (DEBUG.WAVE_FORM) console.log(
+				'waveform: globalAlpha:', ctx.globalAlpha,
+			);
+		}
+		catch (error) {
+			console.error('Trying to inizialize Waveform canvas failed');
+		}
 
-			audioElement.addEventListener('canplaythrough', this.render);
-		});
+		self.hollowIndicator = false;
+		self.reset();
+		self.showProgress(0);
+
+		audioElement.addEventListener('canplaythrough', this.render);
 	}
 
 	return self.init().then(() => self);   // const waveform = await new Waveform();

@@ -2,7 +2,7 @@
 
 /* Player layout */
 
-body.booting .audio_player { Xoverflow:hidden; }
+XhideResizeGlitches body.booting .audio_player { overflow:hidden; }
 
 .audio_player {
 	display:grid;
@@ -38,6 +38,7 @@ body.booting .audio_player { Xoverflow:hidden; }
 	min-height:var(--player-advanced-min-height);
 	width:max-content;
 	margin:0 auto;
+	color:var(--playlist-item-color);
 }
 .audio_player.simple {
 	grid-template-rows:repeat(3, min-content) 1fr min-content;
@@ -58,6 +59,7 @@ body.booting .audio_player { Xoverflow:hidden; }
 	.audio_player.simple {
 		padding-bottom:0.5em; /* //...why? Without in large mode, disabling EQ removes bottom page "padding" */
 	}
+	.audio_player .now_playing { height:var(--now-playing-height); }
 }
 @media (min-width: 860px) and (max-width: 1300px) {
 	.audio_player {
@@ -87,6 +89,7 @@ body.booting .audio_player { Xoverflow:hidden; }
 			"lyrics    lyrics  "
 		;
 	}
+	.audio_player .now_playing { height:var(--now-playing-height); }
 	.audio_player .lyrics { display:none; grid-area:none; }
 }
 @media (max-width: 860px) {
@@ -123,19 +126,24 @@ body.booting .audio_player { Xoverflow:hidden; }
 			"lyrics"
 		;
 	}
-	.audio_player .lyrics::before {
+	.audio_player .lyrics:not(.empty)::before {
 		display:block;
 		content:'Lyrics';
 		margin:0.25em 0 1em;
-		font-size:1.5em; font-weight:bold; color:var(--text-faint); font-family:sans-serif;
+		font-size:1.5em; font-weight:bold; font-family:sans-serif;
+		color:var(--text-faint);
 	}
-
 	.audio_player .now_playing::before {
 		content:'Now Playing';
 		margin:0.75em 0 0.5em;
-		font-size:1.5em; font-weight:bold; color:var(--text-faint);
+		font-size:1.5em; font-weight:bold;
+		color:var(--text-faint);
 	}
-	.audio_player .lyrics { Xwidth:var(--playlist-width); height:auto; justify-self:center; padding-top:1.5em; }
+	.audio_player .lyrics { height:auto; justify-self:center; padding-top:1.5em; }
+	.audio_player:has(.empty.lyrics) { padding-bottom:1.5em; }
+}
+@media (max-width: 300px) {
+	.audio_player { width:300px; }
 }
 
 .audio_player > * { max-width:calc(100vw - 2em); }
@@ -152,8 +160,6 @@ body.booting .audio_player { Xoverflow:hidden; }
 	gap:0.5em;
 	margin-top:var(--filter-margin-top);
 	margin-bottom:var(--filter-margin-bottom);
-	padding-left:calc(var(--player-item-focus-margin) + 1px);
-	Xscroll-padding:10em 0 0;
 }
 .audio_player .filter_text {
 
@@ -183,7 +189,6 @@ body.booting .audio_player { Xoverflow:hidden; }
 	border:var(--item-border);
 	border-radius:var(--border-radius);
 	padding:var(--albums-horizontal-padding);
-	margin:var(--player-item-focus-margin);
 	background:var(--playlist-item-bg);
 	text-align:center; cursor:pointer;
 	scroll-margin:calc(var(--album-list-item-width) * 0.333);
@@ -211,7 +216,6 @@ body.booting .audio_player { Xoverflow:hidden; }
 	scroll-padding:calc(var(--playlist-image-size) / 2 + 0.25em);
 	list-style-position:inside;
 	overflow-y:auto;
-	padding:var(--player-item-focus-margin);
 	user-select:none;
 }
 .audio_player .playlist.scrolling {
@@ -242,6 +246,18 @@ body.booting .audio_player { Xoverflow:hidden; }
 .audio_player .playlist li > p:nth-of-type(3) { grid-area:title;  align-self:end; }
 .audio_player .playlist li:hover { background:var(--playlist-hover-bg); }
 .audio_player .playlist li.playing { color:var(--playlist-playing-color); background:var(--playlist-playing-bg); }
+X.audio_player .playlist li.playing::before {
+	--c:var(--page-bg-color);
+	content:'Now \a playing'; content:'▶';
+	position:absolute; top:50%; left:calc(5px + var(--playlist-image-size) / 2);
+	transform:translate(-50%,-50%); color:var(--playlist-playing-color); color:#fffa;
+	font-size:3em; white-space:pre; text-align:center;
+	Xtext-shadow:
+		1px  0 var(--c),
+		-1px 0 var(--c),
+		0 1px  var(--c),
+		0 -1px var(--c) ;
+}
 
 .audio_player .playlist li > img {
 	display:grid; place-content:center; font-size:0.7em;
@@ -272,9 +288,9 @@ body.booting .audio_player { Xoverflow:hidden; }
 	grid-template-rows:auto; align-items:center;
 	width:var(--audio-width);
 	grid-template-areas:
-		"back stop play next volume softer mute  louder advanced"
-		"seek seek seek seek seek   seek   seek  seek   seek"
-		"list song time time time   time   time  stars  import"
+		"back stop play next volume softer mute louder advanced"
+		"seek seek seek seek seek   seek   seek seek   seek"
+		"list song lcd  lcd  lcd    lcd    lcd  stars  import"
 	;
 }
 .audio_player .controls .audio_track_back  { grid-area:back;     }
@@ -290,7 +306,7 @@ body.booting .audio_player { Xoverflow:hidden; }
 .audio_player .controls [name=progress]    { grid-area:seek;     align-self:center; }
 .audio_player .controls .audio_loop_list   { grid-area:list;     }
 .audio_player .controls .audio_loop_song   { grid-area:song;     }
-.audio_player .controls time               { grid-area:time;     }
+.audio_player .controls .lcd               { grid-area:lcd;      }
 .audio_player .controls .audio_config      { grid-area:stars;    }
 .audio_player .controls .audio_eject       { grid-area:import;   }
 .audio_player .controls .audio_eject       { grid-area:import;   }
@@ -300,7 +316,7 @@ body.booting .audio_player { Xoverflow:hidden; }
 	border:var(--item-border);
 	border-radius:5px;
 	background:var(--playlist-item-bg);
-	padding:0.5em;
+	padding:var(--control-padding);
 }
 
 
@@ -308,22 +324,22 @@ body.booting .audio_player { Xoverflow:hidden; }
 	Xmargin-top:0.35em; Xmargin-bottom:0.15em;
 }
 
-.audio_player time {
+.audio_player .lcd {
 	display:grid; position:relative; z-index:1;
 	grid-template-columns:min-content 1fr min-content; outline:dashed 1px #fff1;
 	grid-template-rows:1fr 1fr;
 	grid-template-areas:
 		"list played    pause"
-		"song remaining stars"
+		"song remaining lock"
 	;
 }
-.audio_player time .timestamp { grid-area:played;    align-self:end;     }
-.audio_player time .remaining { grid-area:remaining; align-self:start;   }
-.audio_player time .list      { grid-area:list;      justify-self:start; }
-.audio_player time .song      { grid-area:song;      justify-self:start; align-self:end; }
-.audio_player time .pause     { grid-area:pause;     justify-self:end;   }
-.audio_player time .stars     { grid-area:stars;     justify-self:end;   align-self:end; }
-.audio_player time {
+.audio_player .lcd .timestamp { grid-area:played;    align-self:end;     }
+.audio_player .lcd .remaining { grid-area:remaining; align-self:start;   }
+.audio_player .lcd .list      { grid-area:list;      justify-self:start; }
+.audio_player .lcd .song      { grid-area:song;      justify-self:start; align-self:end; }
+.audio_player .lcd .pause     { grid-area:pause;     justify-self:end;   }
+.audio_player .lcd .wake_lock { grid-area:lock;      justify-self:end;   align-self:end; }
+.audio_player .lcd {
 	place-content:center;
 
 	width:calc(100% - 1em);
@@ -363,7 +379,7 @@ body.booting .audio_player { Xoverflow:hidden; }
 		0 4px  var(--timestamp-text-shadow-1),
 		0 -4px var(--timestamp-text-shadow-1) ;
 }
-.audio_player time .indicator {
+.audio_player .lcd .indicator {
 	--c:#181810; --s:#000;
 	padding:0 5px; color:var(--timestamp-indicator-off); text-transform:uppercase;
 	font-family:LCD-extra; font-size:0.6em;
@@ -373,8 +389,8 @@ body.booting .audio_player { Xoverflow:hidden; }
 		0 1px  var(--s),
 		0 -1px var(--s) ;
 }
-.audio_player time .indicator.on { color:var(--timestamp-color); }
-.audio_player time .indicator.blink {
+.audio_player .lcd .indicator.on { color:var(--timestamp-color); }
+.audio_player .lcd .indicator.blink {
 	--c:var(--timestamp-color); color:var(--c);
 	animation:TIMESTAMP_BLINK 3s infinite;
 }
@@ -400,15 +416,9 @@ body.booting .audio_player { Xoverflow:hidden; }
 	color:transparent;
 }
 
-X.audio_player .audio_stop:not(.pressed) ~ .audio_player .audio_play,/* //... Option */
-X.audio_player button.pressed:not(:focus) {
-	box-shadow:0 0 10px 2px #fff8;
-	background-color:#ffe;
-}
-
 .audio_player .audio_stop         { --x:0; --y:0; }
 .audio_player .audio_play         { --x:1; --y:0; }
-.audio_player .audio_play.pressed { --x:2; --y:0; } /* //... Option */
+.audio_player .audio_play.pressed { --x:2; --y:0; }
 .audio_player .audio_pause        { --x:2; --y:0; }
 .audio_player .audio_track_back   { --x:3; --y:0; }
 .audio_player .audio_track_next   { --x:4; --y:0; }
@@ -462,12 +472,11 @@ X.audio_player button.pressed:not(:focus) {
 	padding:var(--control-padding);
 	background:var(--playlist-item-bg);
 	transform:scaleY(-1);
-	cursor:pointer;
 }
 .audio_player .analyser.fade {
 	padding:var(--control-padding);
 	border-radius:var(--border-radius);
-	opacity:0.85; filter:var(--analyser-filter);
+	opacity:0.85; filter:var(--analyser-filter-fade);
 }
 
 
@@ -476,19 +485,22 @@ X.audio_player button.pressed:not(:focus) {
 .audio_player .equalizer {
 	display:grid;
 	grid-auto-flow:columns;
-	gap:auto;
 	width:var(--audio-width);
 	border:var(--item-border);
 	border-radius:var(--border-radius);
-	padding:0.5em 0.25em 0.25em;
+	padding:var(--control-padding) 0.25em 0.25em;
 	background:var(--playlist-item-bg);
 }
 .audio_player .equalizer > * { width:auto; }
-[class] .audio_player .equalizer input[type=range] {
+[class] .audio_player .equalizer input[type=range] { /* //...? who overrides this */
 	grid-row:1;
 	writing-mode:vertical-lr;
 	transform:scaleY(-1);
 	height:var(--equalizer-height);
+}
+
+.audio_player .equalizer:focus-within {
+	touch-action:none;
 }
 .iphone .audio_player .equalizer input[type=range] {/* //...ugly iPhone hack */
 	-webkit-appearance:slider-vertical;  /* Breaks custom styling on Chromium */
@@ -557,7 +569,6 @@ X.audio_player button.pressed:not(:focus) {
 	grid-template-rows:repeat(3, min-content);
 	width:var(--audio-width);
 	text-align:center;
-	height:var(--now-playing-height);
 }
 .audio_player .now_playing h2 {
 	padding:0; margin:0.25em 0 0;
@@ -567,10 +578,14 @@ X.audio_player button.pressed:not(:focus) {
 	display:block;
 	text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
 }
+
+
+
 .audio_player .album_cover > a {
 	display:block; text-align:center;
 	border:solid 1px #000; border-radius:var(--border-radius);
-	box-shadow:0 0 0 var(--cover-shadow-width) var(--border-color);
+	Xbox-shadow:0 0 0 var(--cover-shadow-width) var(--border-color);
+	box-shadow:0 0 0 var(--cover-shadow-width) var(--playlist-item-bg);
 	Xwidth:var(--cover-width); margin:var(--cover-shadow-width) auto 0.75em;
 Xmax-width:16em;
 }
@@ -579,6 +594,7 @@ Xmax-width:16em;
 	border-radius:calc(var(--border-radius) - 2px);
 	vertical-align:middle;
 }
+
 .audio_player .comments { text-align:center; Xmargin-bottom:0.25em; }
 
 .audio_player .lyrics {
@@ -587,6 +603,9 @@ Xmax-width:16em;
 }
 .audio_player .lyrics.scrolling {
 	padding-right:var(--lyrics-scroll-padding);
+}
+.audio_player .lyrics.empty {
+	display:none;
 }
 
 

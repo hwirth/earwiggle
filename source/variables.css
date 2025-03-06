@@ -2,10 +2,11 @@
 
 :root {
 	--page-bg-color              : #000;
-	--text-color                 : #fff;
+	--text-color                 : #ffe;
 	--text-faint                 : #aa9;
 
-	--focus-color                : #4f0;
+	--focus-color                : #fc0;
+	--focus-color                : #fff;
 	--focus-input-shadow         : 0 0 0 1px var(--focus-color), inset 0 0 0 1px #0008;
 
 	--button-padding             : 0.2em 0.5em;
@@ -23,7 +24,6 @@
 }
 
 :root {
-	--player-item-focus-margin   : 1px;
 	--player-simple-min-height   : calc(var(--cover-width) + 16.5em);
 	--player-advanced-min-height : calc(var(--cover-width) + 33.5em);
 
@@ -64,10 +64,6 @@
 	--anchor-focus-color         : #22ff44;
 	--anchor-active-color        : #ee44bb;
 
-	--scrollbar-color            : #888880;
-	--scrollbar-bg               : #444440;
-	--scrollbar-button           : #666660;
-
 	--download-icon-color        : #ccc;
 	--download-icon-bg           : #ccc6;
 
@@ -85,29 +81,31 @@
 
 	--audio-width                : 360px;
 	--cover-width                : calc(var(--audio-width) - 6px);
-	--cover-shadow-width         : 3px;
-	--albumlist-scroll-padding   : 0.35em;
+
+	--cover-shadow-width         : var(--border-radius);
 	--filter-margin-top          : 0.5em;
 	--filter-margin-bottom       : 0.5em;
+
+	--albumlist-scroll-padding   : 0.35em;
 	--playlist-scroll-padding    : 0.5em;
 	--lyrics-scroll-padding      : 1.2em;
 
 	--item-border                : border:solid 0px var(--border-color);
 	--item-border-faint          : border:solid 0px var(--border-faint);
 
+	--playlist-playing-bg        : #fff4;
+	--playlist-playing-color     : #fff;
+	--playlist-image-size        : 64px;
+	--playlist-item-color        : var(--text-color);
 	--playlist-item-bg           : #20201a;
 	--playlist-hover-bg          : #ffffee30;
 	--playlist-item-bg-stars     : #00000040;
 	--playlist-hover-bg-stars    : #ffffee30;
+		--playlist-item-bg           : #282824c0;
+		--playlist-hover-bg          : var(--playlist-item-bg);
+		--playlist-item-bg-stars     : var(--playlist-item-bg);
+		--playlist-hover-bg-stars    : var(--playlist-item-bg-stars);
 
-	--playlist-item-bg           : #282824a0;
-	--playlist-hover-bg          : var(--playlist-item-bg);
-	--playlist-item-bg-stars     : var(--playlist-item-bg);
-	--playlist-hover-bg-stars    : var(--playlist-item-bg-stars);
-
-	--playlist-playing-bg        : #0f04;
-	--playlist-playing-color     : #4f0;
-	--playlist-image-size        : 64px;
 
 
 	--now-playing-height         : 5em;
@@ -117,18 +115,17 @@
 	--album-list-item-width      : var(--playlist-image-size);
 
 	--nr-h-albums                : 5;
-	--nr-offscreen-albums        : 5.55;
+	--nr-offscreen-albums        : 5.5;
 
 	--playlist-width             : calc(
-		(var(--album-list-item-width) + 2 * var(--albums-horizontal-padding) + 4px/*border+focus?//...margin*/)
+		(var(--album-list-item-width) + 2 * var(--albums-horizontal-padding) + 1px/*4border+focus?//...margin*/)
 		* var(--nr-h-albums) + var(--albums-gap) * (var(--nr-h-albums) - 1)
 	);
 
 	--thumbnail-bg               : #333;
 	--thumbnail-bg               : transparent;
 
-	--control-padding            : var(--border-radius);
-	--control-padding:5px;
+	--control-padding            : 0.5em;
 
 	--timestamp-color            : #fff;
 	--Xtimestamp-bg              : #0208;
@@ -145,110 +142,7 @@
 
 	--equalizer-height           : 6em;
 
-	--analyser-filter            : none;  /* Light mode only */
-
-
-	/* Variety of configurations for future toggle */
-	--analyser-height            : 64px;
-	--analyser-clear-color       : #00000008;
-	--analyser-peak-color        : #0005;   /* Defines background of scrolling up part */
-	--analyser-barheight-factor  : 0.5;
-	--analyser-rainbow-factor    : 0.3;       /* Show full color spectrum */
-	--analyser-offset-y          : 0;       /* No accidential anti-aliasing */
-	--analyser-offset-y          : 1;       /* No accidential anti-aliasing */
-	--analyser-base-height       : 3;       /* Bright bottom pixels */
-	--analyser-hide-base-width   : 0.03;
-	--analyser-hide-base-shift   : 0;       /* No idea what it does */
-	--analyser-set-alpha         : true;
-	--analyser-blue-light-width  : 0.1;
-	--analyser-blue-light-factor : 0.01;
-
-	--analyser-height            : 64px;
-	--analyser-clear-color       : #00000001;
-	--analyser-peak-color        : #0003;   /* Defines background of scrolling up part */
-	--analyser-barheight-factor  : 1;
-	--analyser-rainbow-factor    : 0.35;       /* Show full color spectrum */
-	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
-	--analyser-offset-y          : 1;    /* 1.0: No accidential anti-aliasing */
-	--analyser-base-height       : 3;       /* Bright bottom pixels */
-	--analyser-hide-base-width   : 0.02;
-	--analyser-hide-base-shift   : -0.01;   /* No idea what it does */
-	--analyser-set-alpha         : true;
-	--analyser-blue-light-width  : 0.1;
-	--analyser-blue-light-factor : 1;
-
-	--analyser-height            : 112px;
-	--analyser-clear-color       : transparent;
-	--analyser-peak-color        : #0005;   /* Defines background of scrolling up part */
-	--analyser-barheight-factor  : 0.35;
-	--analyser-rainbow-factor    : 1;       /* Show full color spectrum */
-	--analyser-rainbow-factor    : 0.3;     /* 0.3: Red to green, because blue is //... barely visible */
-	--analyser-offset-y          : 0;       /* No accidential anti-aliasing */
-	--analyser-offset-y          : 1;       /* No accidential anti-aliasing */
-	--analyser-base-height       : 3;       /* Bright bottom pixels */
-	--analyser-hide-base-width   : 0.02;
-	--analyser-hide-base-shift   : -0.01;   /* No idea what it does */
-	--analyser-set-alpha         : true;
-	--analyser-blue-light-width  : 0.1;
-	--analyser-blue-light-factor : 1;
-
-	--analyser-height            : 64px;
-	--analyser-clear-color       : #00000002;
-	--analyser-peak-color        : #0008;   /* Defines background of scrolling up part */
-	--analyser-barheight-factor  : 0.65;
-	--analyser-rainbow-factor    : 0.35;       /* Show full color spectrum */
-	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
-	--analyser-offset-y          : 0.5;    /* 1.0: No accidential anti-aliasing */
-	--analyser-base-height       : 3;       /* Bright bottom pixels */
-	--analyser-hide-base-width   : 0.01;
-	--analyser-hide-base-shift   : -0.01;   /* No idea what it does */
-	--analyser-set-alpha         : true;
-	--analyser-blue-light-width  : 0.1;
-	--analyser-blue-light-factor : 1;
-
-	--analyser-frequency-zoom    : 2;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
-	--analyser-top-freq-bars     : 4;
-	--analyser-top-freq-fade     : 7;
-	--analyser-fade-bar-width    : 1;
-
-
-	--analyser-height            : 64px;
-	--analyser-clear-color       : #00000001;
-	--analyser-peak-color        : #0007;   /* Defines background of scrolling up part */
-	--analyser-barheight-factor  : 1.5;
-	--analyser-rainbow-factor    : 0.6;       /* Show full color spectrum */
-	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
-	--analyser-offset-y          : 0.5;    /* 1.0: No accidential anti-aliasing */
-	--analyser-base-height       : 3;       /* Bright bottom pixels */
-	--analyser-hide-base-width   : 0.025;
-	--analyser-hide-base-shift   : -0.02;   /* No idea what it does */
-	--analyser-set-alpha         : true;
-	--analyser-blue-light-width  : 0.1;
-	--analyser-blue-light-factor : 1;
-	--analyser-frequency-zoom    : 4;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
-	--analyser-top-freq-bars     : 5;
-	--analyser-top-freq-fade     : 7;
-	--analyser-fade-bar-width    : 1;
-
-	--analyser-height            : 64px;
-	--analyser-clear-color       : #00000008;
-	--analyser-peak-color        : #0008;   /* Defines background of scrolling up part */
-	--analyser-barheight-factor  : 1.5;
-	--analyser-rainbow-factor    : 0.6;       /* Show full color spectrum */
-	--analyser-offset-x          : -0;     /* 0.0: No accidential anti-aliasing */
-	--analyser-offset-y          : 1.5;    /* 1.0: No accidential anti-aliasing */
-	--analyser-base-height       : 3;       /* Bright bottom pixels */
-	--analyser-hide-base-width   : 0.025;
-	--analyser-hide-base-shift   : -0.02;   /* No idea what it does */
-	--analyser-set-alpha         : true;
-	--analyser-blue-light-width  : 0.1;
-	--analyser-blue-light-factor : 1;
-	--analyser-frequency-zoom    : 4;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
-	--analyser-top-freq-bars     : 5;
-	--analyser-top-freq-fade     : 7;
-	--analyser-fade-bar-width    : 0.5;
-
-
+	--analyser-filter-fade        : none;  /* Light mode only */
 
 	--Xanalyser-rainbow-factor    : 2.875;       /* Show full color spectrum */
 	--Xanalyser-rainbow-factor    : 11.5;       /* Show full color spectrum */
@@ -263,11 +157,248 @@
 
 	--waveform-left-color-max    : #08f8;
 	--waveform-left-color-avg    : #4cf6;
+	--waveform-mid-color-max     : #aff;
+	--waveform-mid-color-avg     : #066;
 	--waveform-right-color-avg   : #4fc6;
 	--waveform-right-color-max   : #0f88;
 
 	--serif-font-family          : Libertinus Serif, serif;
 }
 
+
+:root:has(.audio_player .analyser) {
+	/* Variety of configurations for future toggle */
+	--analyser-min-db            : -10;
+	--analyser-max-db            : -120;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000008;
+	--analyser-peak-color        : #0005;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1;
+	--analyser-rainbow-factor    : 0.625;       /* Show full color spectrum */
+	--analyser-offset-x          : 0;           /* No accidential anti-aliasing */
+	--analyser-offset-y          : 1;           /* No accidential anti-aliasing */
+	--analyser-base-height       : 3;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.03;        /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : 0;           /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 180;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 0.01;
+
+	--analyser-frequency-zoom    : 2;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
+	--analyser-top-freq-bars     : 4;
+	--analyser-top-freq-fade     : 7;
+	--analyser-fade-bar-width    : 1;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode1) {
+	--analyser-min-db            : -30;
+	--analyser-max-db            : -100;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000001;
+	--analyser-peak-color        : #0003;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1;
+	--analyser-rainbow-factor    : 0.35;        /* Show full color spectrum */
+	--analyser-offset-x          : 0;           /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 1;           /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 3;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.02;        /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 196;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode2) {
+	--analyser-min-db            : -30;
+	--analyser-max-db            : -100;
+	--analyser-height            : 112px;
+	--analyser-clear-color       : transparent;
+	--analyser-peak-color        : #0005;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 0.35;
+	--analyser-rainbow-factor    : 1;           /* Show full color spectrum */
+	--analyser-rainbow-factor    : 0.3;         /* 0.3: Red to green, because blue is //... barely visible */
+	--analyser-offset-x          : 0;           /* No accidential anti-aliasing */
+	--analyser-offset-y          : 1;           /* No accidential anti-aliasing */
+	--analyser-base-height       : 3;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.02;        /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 196;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode2b) {
+	--analyser-min-db            : -30;
+	--analyser-max-db            : -100;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : transparent;
+	--analyser-peak-color        : #0005;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1;
+	--analyser-rainbow-factor    : 0.625;       /* 0.3: Red to green, because blue is //... barely visible */
+	--analyser-offset-x          : 0;           /* No accidential anti-aliasing */
+	--analyser-offset-y          : 1;           /* No accidential anti-aliasing */
+	--analyser-base-height       : 3;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.02;        /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 196;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode2c) {
+	--analyser-min-db            : 10;
+	--analyser-max-db            : -80;
+	--analyser-height            : 112px;
+	--analyser-clear-color       : transparent;
+	--analyser-peak-color        : #0005;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 0.5;
+	--analyser-rainbow-factor    : 0.625;       /* 0.3: Red to green, because blue is //... barely visible */
+	--analyser-offset-x          : 0;           /* No accidential anti-aliasing */
+	--analyser-offset-y          : 1;           /* No accidential anti-aliasing */
+	--analyser-base-height       : 3;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.02;        /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 255;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode2d) {
+	--analyser-min-db            : -30;
+	--analyser-max-db            : -100;
+	--analyser-height            : 112px;
+	--analyser-clear-color       : transparent;
+	--analyser-peak-color        : #0005;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 0.05;
+	--analyser-rainbow-factor    : 0.625;       /* 0.3: Red to green, because blue is //... barely visible */
+	--analyser-offset-x          : 0;           /* No accidential anti-aliasing */
+	--analyser-offset-y          : 2;           /* No accidential anti-aliasing */
+	--analyser-base-height       : 0;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.02;        /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 255;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode2e) {
+	--analyser-min-db            : -20;
+	--analyser-max-db            : -100;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000000;   /* transparent, #00000002...#00000008 */
+	--analyser-peak-color        : #0005;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 0.75;
+	--analyser-rainbow-factor    : 0.625;       /* 0.3: Red to green, because blue is //... barely visible */
+	--analyser-offset-x          : 0;           /* No accidential anti-aliasing */
+	--analyser-offset-y          : 1;           /* No accidential anti-aliasing */
+	--analyser-base-height       : 0;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.0075;      /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 192;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+}
+
+:root:has(.audio_player .analyser.mode2f) {
+	--analyser-min-db            : -30;
+	--analyser-max-db            : -100;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000000;   /* transparent, #00000002...#00000008 */
+	--analyser-peak-color        : #0005;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1.25;
+	--analyser-rainbow-factor    : 0.625;       /* 0.3: Red to green, because blue is //... barely visible */
+	--analyser-offset-x          : 0;           /* No accidential anti-aliasing */
+	--analyser-offset-y          : 0.5;          /* No accidential anti-aliasing */
+	--analyser-base-height       : 0;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.0075;      /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 192;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode3) {
+	--analyser-min-db            : 0;
+	--analyser-max-db            : -90;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000002;
+	--analyser-peak-color        : #0004;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1;
+	--analyser-rainbow-factor    : 1;           /* Show full color spectrum */
+	--analyser-offset-x          : 0.1;         /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 0.5;         /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 0;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.01;        /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.01;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 196;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode4) {
+	--analyser-min-db            : -30;
+	--analyser-max-db            : -100;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000001;
+	--analyser-peak-color        : #0007;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1;
+	--analyser-rainbow-factor    : 0.6;         /* Show full color spectrum */
+	--analyser-offset-x          : 0;           /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 0.5;         /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 3;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.025;       /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.02;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 196;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 4;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
+	--analyser-top-freq-bars     : 5;
+	--analyser-top-freq-fade     : 7;
+	--analyser-fade-bar-width    : 1;
+	--analyser-frequency-zoom    : 2;
+	--analyser-filter-fade       : none;
+}
+
+:root:has(.audio_player .analyser.mode5) {
+	--analyser-min-db            : -30;
+	--analyser-max-db            : -100;
+	--analyser-height            : 64px;
+	--analyser-clear-color       : #00000008;
+	--analyser-peak-color        : #0008;       /* Defines background of scrolling up part */
+	--analyser-barheight-factor  : 1.5;
+	--analyser-rainbow-factor    : 0.6;         /* Show full color spectrum */
+	--analyser-offset-x          : 0;           /* 0.0: No accidential anti-aliasing */
+	--analyser-offset-y          : 1.5;         /* 1.0: No accidential anti-aliasing */
+	--analyser-base-height       : 3;           /* Bright bottom pixels */
+	--analyser-hide-base-width   : 0.025;       /* Try compensate for always full base buffer entries */
+	--analyser-hide-base-shift   : -0.02;       /* No idea what it does, not what I though at least */
+	--analyser-set-alpha         : 196;
+	--analyser-blue-light-width  : 0.1;
+	--analyser-blue-light-factor : 1;
+	--analyser-frequency-zoom    : 4;   /* Scales the shown f range //...? AND groups bars (bands also "zoomed") */
+	--analyser-top-freq-bars     : 5;
+	--analyser-top-freq-fade     : 7;
+	--analyser-fade-bar-width    : 0.5;
+
+	--analyser-filter-fade       : none;
+}
 
 /*EOF*/

@@ -194,9 +194,12 @@ export const songData = async function(parameters) {
 				url      : null,
 				comments : 'Music on your computer',
 				trigger  : 'upload',
+				filter   : 'Local Files',
 			},
 		],
 	};
+
+	data.songs.forEach((song, index) => song.id = index);
 
 	const album_names = [...new Set(data.songs.flatMap(s => s.album))];
 	data.albums = album_names.map(a => data.songs.find(s => s.album == a));

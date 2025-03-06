@@ -3,6 +3,21 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+
+if (!HTMLCanvasElement.prototype.checkVisibility) {
+	HTMLCanvasElement.prototype.checkVisibility = function() {
+		const rect = this.getBoundingClientRect();
+		return (
+			rect.top >= 0
+			&& rect.left >= 0
+			&& rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+			&& rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+		);
+	};
+}
+
+
+
 export const GETParams = new window.URLSearchParams(window.location.search);
 
 export function is_set (variable) {
@@ -31,7 +46,6 @@ export function ucFirst(string) {
 }
 
 export function newElement(definition) {
-
 	if (definition.tagName == undefined) {
 		console.error('newElement without tagName:', definition);
 		debugger;
@@ -53,7 +67,9 @@ export function newElement(definition) {
 
 	if (definition.dataset) {
 		Object.entries(definition.dataset).forEach(([key, value]) => {
-			newElement.dataset[key] = value;
+			if (value !== undefined) {
+				newElement.dataset[key] = value;
+			}
 		});
 	}
 
@@ -66,8 +82,8 @@ export function newElement(definition) {
 	return newElement;
 }
 
-export const getCSSvar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name);
-export const setCSSvar = (name, value) => document.documentElement.style.setProperty(name, value);
+export const getCSSvar = (name, target = document.documentElement) => getComputedStyle(target).getPropertyValue(name);
+export const setCSSvar = (name, value, target = document.documentElement) => target.style.setProperty(name, value);
 
 export function triggerDownload(content, filename, mimeType = 'application/octet-stream') {
 	const blob = new Blob([content], { type: 'application/octet-stream' });
@@ -88,6 +104,8 @@ export function triggerDownload(content, filename, mimeType = 'application/octet
 }
 
 export function format_time(time) {
+	if (isNaN(time)) return '--:--:--.-';
+
 	const hours   = Math.floor(time / 3600);
 	const minutes = Math.floor(time / 60) % 60;
 	const seconds = Math.floor(time) % 60;
@@ -100,17 +118,24 @@ export function format_time(time) {
 	);
 }
 
-export function extensionJpg(filename) {
-	return filename.replace(/\.[^/.]+$/, '.jpg');
+export function changeFileExtension(filename, extension = '.jpg') {
+	return filename.replace(/\.[^/.]+$/, extension);
 }
 
-
-
 export function prefersReducedMotion() {
-	return false && (
+	const test = `(prefers-reduced-motion: reduce)`;
+	return window.matchMedia(test) === true || window.matchMedia(test).matches;
+/*
+	return (
 		window.matchMedia('(prefers-reduced-motion: reduce)') === true
 		|| window.matchMedia('(prefers-reduced-motion: reduce)').matches
 	);
+*/
+}
+
+export function prefersColorScheme(scheme = 'dark') {
+	const test = `(prefers-color-scheme: ${scheme})`;
+	return window.matchMedia(test) === true || window.matchMedia(test).matches;
 }
 
 export function isMobileDevice() {
@@ -129,6 +154,7 @@ export function isSafari() {
 
 let wake_lock = null;
 export async function wakeLock(enable = null) {
+	if (!!wake_lock == enable) return;
 	if (enable === null) enable = !wake_lock;
 
 	const method    = enable ? 'request' : 'release';
@@ -139,7 +165,7 @@ export async function wakeLock(enable = null) {
 			wake_lock = navigator.wakeLock.request();
 			document.body.classList.add('wake_lock');
 		} else {
-			wake_lock.then(wl => wl.release());
+			wake_lock?.then(wl => wl.release());
 			wake_lock = null;
 			document.body.classList.remove('wake_lock');
 		}
@@ -151,7 +177,28 @@ export async function wakeLock(enable = null) {
 	}
 
 	document.body.classList.toggle('wake_lock', wake_lock && !wake_lock?.released);
-	console.log('wakeLock:', wake_lock);
+	//...console.log('>>> helpers: wakeLock:', wake_lock);
+
+	return wake_lock;
 }
+
+
+export function renderDebugDots(canvas, ctx) {
+	const [w, h] = [canvas.width, canvas.height];
+	ctx.fillStyle = '#fc0';
+	for (let x = 0; x < w; x++) {
+		//ctx.fillStyle = x % 2 ? '#08f' : '#fc0';
+		//ctx.fillRect(x,   0, 1, 1);
+		//ctx.fillRect(x, h-1, 1, 1);
+		for (let y = 0; y < w; y++) {
+			//ctx.fillStyle = y % 2 ? '#08f' : '#fc0';
+			//ctx.fillRect(  0, y, 1, 1);
+			//ctx.fillRect(w-1, y, 1, 1);
+			ctx.fillStyle = (y % 2 + x % 2) ? '#000' : '#fc0';
+			ctx.fillRect(  x, y, 1, 1);
+		}
+	}
+}
+
 
 //EOF

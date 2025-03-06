@@ -3,34 +3,48 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { clamp, newElement, getCSSvar } from './helpers.js';
+import { clamp, newElement, getCSSvar, renderDebugDots } from './helpers.js';
 
 let instanceNr = 0;
 
 export function SpectrumAnalyser(parameters) {
 	const self = this;
 
-	const { SETTINGS, DEBUG, audioContext, audioSource, canvas, fade, loadConfig } = parameters;
-	const { STORAGE_KEY, TOP_FREQ, MIN_DECIBELS, MAX_DECIBELS } = parameters.SETTINGS.SPECTRUM_ANALYSER;
+	const { SETTINGS, DEBUG, audioContext, audioSource, canvas, clearConfig } = parameters;
+	const {
+		STORAGE_KEY, TOP_FREQ, MIN_DECIBELS, MAX_DECIBELS, OFS_DECIBELS,
+		MODES, WHEEL_ZOOM, INSET_BORDER,
+	} = parameters.SETTINGS.SPECTRUM_ANALYSER;
+
+	let mode = parameters.mode;
 
 	this.stream;
 	this.running;
 	this.paused;
 	this.output;
 
-	this.startAnalyser = function(stream, canvas, fade) {
+	this.heightZoom;
+	this.frequencyZoom;
+
+	this.startAnalyser = function(stream, canvas, mode) {
+		const fade = mode > 0;
+
 		// This assumes canvas.style = transform:scaleY(-1)
 		if (!getComputedStyle(canvas).transform) console.error(
 			'You probably want to set transform:scaleY(-1) on the canvas for the spectrum analyser',
 		);
 
-		const [w, h] = [canvas.width, canvas.height];
+		const padding = parseInt(getComputedStyle(canvas).padding, 10);
+		const [w, h] = [canvas.offsetWidth - 2*padding, canvas.offsetHeight - 2*padding];
+
 		const [
-			fadeBar, peakClr, baseHgt,
+			initialCanvasBg, fadeBar, peakClr, baseHgt,
 			fadeBgColor, spectrumColorFactor, fadeOffsetX, fadeOffsetY,
 			hideBaseWidth, hideBaseShift, blueLight, blueWidth,
-			frequencyZoom, tfB, tfF, fadeBarWidth,
+			frequencyZoom, tfB, tfF, fadeBarWidth, applyFadeAlpha,
+			minDecibels, maxDecibels,
 		] = [
+			'--waveform-bg',
 			'--analyser-barheight-factor',
 			'--analyser-peak-color',
 			'--analyser-base-height',
@@ -49,75 +63,60 @@ export function SpectrumAnalyser(parameters) {
 			'--analyser-top-freq-bars',
 			'--analyser-top-freq-fade',
 			'--analyser-fade-bar-width',
+			'--analyser-set-alpha',
+
+			'--analyser-min-db',
+			'--analyser-max-db',
 		].map(v => getCSSvar(v));
 
-		const TF = TOP_FREQ;   // TOP_FREQ : 2**( 0 ),
-		//const TFb = 2**tfBars;  // 1024
-		//const TFf = 2**tfFade;  // 64
-//console.log( TF, TFb, TFf);
-		//const fftSize             = (fade ? TFf     : TFb    );   // Nr. bands
-		//const binLengthFactor     = (fade ? 1/TFf   : 1      );
-
-		//const fftSize             = (fade ? 256*TF  : 16) * 4;   // Nr. bands
 		const fftSize             = (fade ? 2**tfF  : 2**tfB ) * 4;   // Nr. bands
 		const binLengthFactor     = (fade ? 4       : 1      );
 		const peakHeight          = (fade ? 2       : 2      );   // Size of peak indicator (on top of bars)
 		const peakColor           = (fade ? peakClr : '#fff' );   // Color of peak indicator (Bg with new fade)
 		const peakOffset          = (fade ? -1      : -1     );   // bars 1px down, prevent gap below "flames"
-		const barWidthFactor      = (fade ? 2       : 1      );
-		const barHeightFactor     = (fade ? fadeBar : 1-2/h  );   // scale bar height
+		const barWidthFactor      = (fade ? 2       : 1.02   );
+		const barHeightFactor     = (fade ? fadeBar : 1-peakHeight/h);   // scale bar height
 		const barGap              = (fade ? 0       : 1      );
 		const baseHeight          = (fade ? baseHgt : 0      );   // px at bottom, always full color rainbow
 		const luminosity          = 50;
 		const fullDecaySeconds    = 3;
-		const applyFadeAlpha      = getCSSvar('--analyser-set-alpha') == 'true';
 
 
 // CANVAS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-		/*//...
-			const ratio = (
-				window.devicePixelRatio /
-				(document.createElement('canvas').getContext('2d').backingStorePixelRatio || 1)
-			);
-			const style = getComputedStyle(canvas);
-			const borderPadding = (parseInt(style.borderWidth) + parseInt(style.paddingLeft)) * 2 * ratio;
-		*/
-		const ratio = 1;
-		//const borderPadding = getCSSvar('--control-padding');
-		const borderPadding = 0;
-
-		const offset = 2 * parseInt(borderPadding, 10);
 		if (canvas.checkVisibility()) {
-			canvas.setAttribute('width' , canvas.width  = canvas.offsetWidth  * ratio + offset);
-			canvas.setAttribute('height', canvas.height = canvas.offsetHeight * ratio + offset);
+			canvas.width  = canvas.offsetWidth - 2*padding;
+			canvas.height = canvas.offsetHeight - 2*padding;
 		}
 
 		const canvasCtx = canvas.getContext('2d', { willReadFrequently: true });
 		//...?? NOT needed?? //...canvasCtx.translate(0.5, 0.5);
 
-		function fade_alpha() {
-			// Fade dark areas
-			const [w, h]    = [canvas.width, canvas.height];
-			const imgData   = canvasCtx.getImageData(0, 0, w, h);
-			const data      = imgData.data;
+		canvasCtx.fillStyle = initialCanvasBg;
+		canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+		function fade_alpha(alpha = applyFadeAlpha) {
+			const [w, h]  = [canvas.width, canvas.height];
+			const imgData = canvasCtx.getImageData(0, 0, w, h);
+			const data    = imgData.data;
 
 			for (let i=0, y=0 ; y < 1+canvas.height ; y++) {
 				for (let x=0 ; x < canvas.width ; x++, i+=4) {
-
-if (false) {
+					const R = data[i + 0];
+					const G = data[i + 1];
+					const B = data[i + 2];
+		if (false) {
 					// Move colors towards red
 					const f = 1;
 					const j = i//(nr_pixels - 1) - (i + w);
 					const R = Math.max(0, data[j + 0] - f);
 					const G = Math.max(0, data[j + 1] - f);
 					const B = Math.max(0, data[j + 2] - f);
+		}
 					data[i + 0] = R;
 					data[i + 1] = G;
 					data[i + 2] = B;
-}
-					// Set alpha
-					data[i + 3] = 225;
+					data[i + 3] = applyFadeAlpha;
 				}
 			}
 
@@ -128,8 +127,8 @@ if (false) {
 // ANALYSER //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 		const analyser = audioContext.createAnalyser();
-		analyser.maxDecibels = MIN_DECIBELS;
-		analyser.minDecibels = MAX_DECIBELS;
+		analyser.maxDecibels = minDecibels;
+		analyser.minDecibels = maxDecibels;
 		stream.connect(analyser);
 
 		analyser.fftSize   = fftSize;
@@ -144,15 +143,17 @@ if (false) {
 		const octaveOffset = (canvas.width - octaveStep * Math.floor(nrOctaves)) / 2;
 
 		const barMax = Array(bufferLength).fill(0);
-		const heightConvert = (canvas.height - baseHeight) / 256/*1 byte*/ * barHeightFactor;
+		const heightConvert = (
+			(fade)
+			? (canvas.height - baseHeight) / 256/*1 byte*/ * barHeightFactor
+			: h / 255 * barHeightFactor
+		);
 
 		let lastTime = 0;
 		function draw(timestamp) {
 			if (!self.running) return;
 
 			requestAnimationFrame(draw);
-
-			if (canvas.width == 0) return;
 
 			const now = Date.now();
 			if (now - self.lastFPStime > 1000) {
@@ -162,58 +163,39 @@ if (false) {
 
 			if (self.paused) return;
 
-			//...if (!canvas.checkVisibility()) return;
-
 			const elapsedSeconds = (timestamp - lastTime) / 1000 / fullDecaySeconds;
 			lastTime = timestamp;
 			const reduceMax = fade ? 1 : (canvas.height * elapsedSeconds) || 0;
 
 			analyser.getByteFrequencyData(dataArray);
 
+			const [w, h] = [canvas.width, canvas.height];
+
 			if (fade) {
 				canvasCtx.drawImage(canvas, fadeOffsetX, fadeOffsetY);
 				if (fadeBgColor != 'transparent') {
 					canvasCtx.fillStyle = fadeBgColor;
-					canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+					canvasCtx.fillRect(0, 0, w, h);
 				}
 				if (applyFadeAlpha) fade_alpha();
 			} else {
-				canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+				//...canvasCtx.fillStyle = initialCanvasBg;
+				//...canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+				canvasCtx.clearRect(0, 0, w, h);
 			}
 
 
 // COLUMNS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-			const barWidth = fade ? 1*fadeBarWidth : Math.floor((canvas.width / bufferLength) * barWidthFactor);
+			const barWidth = (
+				(fade)
+				? 1*fadeBarWidth
+				: Math.floor((canvas.width / bufferLength) * barWidthFactor)
+			);
 
-			const scaleFactor = Math.log10(256) / 255;
-			const scaleValueA = y => Math.log10(y + 1) / scaleFactor;   // Highlight base
-			const scaleValueB = y => (y / 256)**4 * 255;                // Highlight treble
-
-			//...canvasCtx.beginPath;
-			//...canvasCtx.moveTo(0, dataArray[0]);
 			for (let i = 0, x = 0; i < bufferLength; i++, x += barWidth+barGap) {
-				//...const c = canvas.height;
-				//...canvasCtx.moveTo(x*c, dataArray[0]/256*canvas.height*c);
-				//...if (x % 8 == 7) canvasCtx.lineTo(x, dataArray[0]/256*canvas.height);
-
-				// CALCULATE BAR HEIGHT
-				// Remove always excessive base values in the Analyser node
-				const r = i / bufferLength;
-
-				// Clamp inverted 1/(r) to [0..1]
-				const reduce_base_factor = clamp((r - hideBaseShift)/hideBaseWidth, 0, 1)**2;
-
-				// Get bar height
-				const j = Math.floor(i / frequencyZoom);
-				const scaled_value = scaleValueB(dataArray[j]);
-				const barHeight = fade ? (
-					baseHeight - peakOffset
-					+ scaled_value
-					* reduce_base_factor
-					//* (r + 0.5) * 2.5
-					* heightConvert
-				) : scaled_value * 0.25;
+				const j = fade ? Math.floor(i / (frequencyZoom * self.frequencyZoom)) : i;
+				const barHeight = (fade ? self.heightZoom : 1) * heightConvert * dataArray[j];
 
 
 // BARS //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -222,13 +204,12 @@ if (false) {
 				const hue = Math.floor((x / canvas.width) * 360 * spectrumColorFactor);
 				const lum = (x) => clamp((1 - Math.abs((x - (360/360)) * 1))**2 , 0, 1);
 
+				const r = i / bufferLength;
 				const dx = (r - 0.475) / blueWidth;
 				const d = (2 + Math.max(0, blueLight-dx*dx)) / 2;
 				const l = fade
-					? 50 //* lum(i*frequencyZoom/bufferLength) //* d
-					: 35;
-
-				//const l = 50;
+					? 50 //...* lum(i*frequencyZoom/bufferLength) //* d
+					: 45;
 
 				// Render
 				canvasCtx.fillStyle = `hsl(${hue}deg 100% ${l}%)`;
@@ -244,16 +225,63 @@ if (false) {
 			//...canvasCtx.strokeStyle = '#ffcc0010';
 			//...canvasCtx.stroke();
 
+			// Octave markers
 			canvasCtx.fillStyle = getCSSvar('--border-color');
 			for (let x = 0; x < canvas.width; octaveStep, x+=octaveStep) {
 				canvasCtx.fillRect(Math.floor(octaveOffset + x), canvas.height - 2, 1, 1);
 			}
+
+			// Inset "shadow"
+			if (INSET_BORDER) {
+				canvasCtx.strokeStyle = getCSSvar('--page-bg-color');
+				canvasCtx.beginPath();
+				canvasCtx.lineWidth = 1;
+				canvasCtx.rect(0.5, 0.5, w-0.5, h-0.5);
+				canvasCtx.stroke();
+				canvasCtx.lineWidth = 1;
+			}
+
+			if (DEBUG.CANVAS_SIZING) renderDebugDots(canvas, canvasCtx);
 		}
 
 		self.running = true;
 		draw();
 
 		return analyser;
+	}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function on_wheel(event) {
+		if (event.shiftKey) {
+			if (event.deltaY > 0) {
+				self.frequencyZoom /= 1.1;
+			} else {
+				self.frequencyZoom *= 1.1;
+			}
+			console.log(self.frequencyZoom);
+		} else {
+			if (event.deltaY > 0) {
+				self.heightZoom /= 1.1;
+			} else {
+				self.heightZoom *= 1.1;
+			}
+		}
+	}
+
+	function on_mousedown(event) {
+		if (event.button == 2) {
+			self.heightZoom = 1;
+			self.frequencyZoom = 1;
+		}
+	}
+
+	function on_contextmenu(event) {
+		if (event.shiftKey || event.ctrlKey || event.altKey) return;
+		event.preventDefault();
 	}
 
 
@@ -279,24 +307,31 @@ if (false) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.saveSettings = function() {
-		if (DEBUG.STORAGE) console.log('Saving settings to localStorage: %c' + STORAGE_KEY, 'color:#c40');
-		const data = { fade };
+		if (DEBUG.STORAGE) console.log(
+			'%cSaving settings%c to localStorage: ' + STORAGE_KEY, 'color:#c40', 'color:unset',
+		);
+
+		const data = { mode, heightZoom: self.heightZoom };
 		const json = JSON.stringify(data);
 		localStorage.setItem(STORAGE_KEY, json);
 	}
 
 	this.loadSettings = function() {
-		if (DEBUG.STORAGE) console.log('Loading settings from localStorage: %c' + STORAGE_KEY, 'color:#47f');
 		const json = localStorage.getItem(STORAGE_KEY);
 		if (json) {
+			if (DEBUG.STORAGE) console.log(
+				'%cLoading settings%c from localStorage:' + STORAGE_KEY, 'color:#47f', 'color:unset',
+			);
 			const values = JSON.parse(json);
-			if (fade === undefined) fade = values.fade;
+			if (mode === undefined) mode = values.mode;
+			if (values.heightZoom) self.heightZoom = values.heightZoom;
 		}
 	}
 
 	this.clearSettings = function() {
 		localStorage.removeItem(STORAGE_KEY);
-		if (DEBUG.STORAGE) console.log('Storage cleared: %c' + STORAGE_KEY, 'color:red');
+
+		if (DEBUG.STORAGE) console.log('%cStorage cleared:%c ' + STORAGE_KEY, 'color:red', 'color:unset');
 	}
 
 
@@ -311,12 +346,21 @@ if (false) {
 		audioSource.disconnect(self.output);
 		self.output.disconnect();
 
-		if (!DEBUG.CLEAR_STORAGE) self.saveSettings();
-		if (DEBUG.ENABLED) console.log('SpectrumAnalyser: exit', self.instanceNr);
+		if (WHEEL_ZOOM) {
+			canvas.removeEventListener('wheel'      , on_wheel);
+			canvas.removeEventListener('mousedown'  , on_mousedown);
+			canvas.removeEventListener('contextmenu', on_contextmenu);
+		}
+
+		if (!clearConfig) self.saveSettings();
+		if (DEBUG.INSTANCES) console.log('SpectrumAnalyser: exit', self.instanceNr);
 	}
 
 	this.init = function() {
-		if (DEBUG.CLEAR_STORAGE) {
+		self.heightZoom = 1;
+		self.frequencyZoom = 1;
+
+		if (clearConfig) {
 			self.clearSettings();
 		} else {
 			//... Breaks playlist remembering setting
@@ -324,9 +368,18 @@ if (false) {
 			addEventListener('beforeunload', self.saveSettings);
 		}
 
+		MODES.forEach(m => canvas.classList.toggle(m, m == MODES[mode]));
+		canvas.classList.toggle('fade', MODES[mode] != 'bars');
+		if (DEBUG.SPECTRUM_ANALYSER) console.log('Mode:', mode, '-', MODES[mode], '-', canvas.className);
+
 		self.paused = false;
-		self.output = self.startAnalyser(audioSource, canvas, fade);
-		canvas.classList.toggle('fade', fade);
+		self.output = self.startAnalyser(audioSource, canvas, mode);
+
+		if (WHEEL_ZOOM) {
+			canvas.addEventListener('wheel'      , on_wheel);
+			canvas.addEventListener('mousedown'  , on_mousedown);
+			canvas.addEventListener('contextmenu', on_contextmenu);
+		}
 	}
 
 	self.init();

@@ -12,7 +12,7 @@ if [ "$1" == "-o" ]; then
 	rm ../covers/*.jpg
 fi
 
-for image in ../fullsize_covers/*; do
+for image in ../fullsize/*; do
 	if [ -f "$image" ]; then
 		filename=$(basename "$image")
 		output="../thumbnails/${filename%.*}.jpg"
@@ -26,7 +26,7 @@ for image in ../fullsize_covers/*; do
 	fi
 done
 
-for image in ../fullsize_covers/*; do
+for image in ../fullsize/*; do
 	if [ -f "$image" ]; then
 		filename=$(basename "$image")
 		output="../covers/${filename%.*}.jpg"

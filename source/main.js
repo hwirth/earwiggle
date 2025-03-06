@@ -3,8 +3,8 @@
 // EARWIGGLE MUSIC PLAYER - copy(l)eft 2025 - https://harald.ist.org/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-import { GETParams, getCSSvar, setCSSvar, newElement, wakeLock } from './helpers.js';
-import { untab, prefersReducedMotion } from './helpers.js';
+import { PROGRAM_NAME, PROGRAM_VERSION } from './constants.js';
+import { GETParams, getCSSvar, setCSSvar, newElement, untab, wakeLock } from './helpers.js';
 import { AudioPlayer   } from './audio_player.js';
 import { MusicLibrary  } from './music_library.js';
 import { UserInterface } from './user_interface.js';
@@ -12,7 +12,7 @@ import { UserInterface } from './user_interface.js';
 export function Application(parameters) {
 	const self = this;
 
-	const { SETTINGS, DEBUG, boot_message } = parameters;
+	const { SETTINGS, DEBUG, CLEAR_STORAGE, boot_message } = parameters;
 	const { DOM_SELECTORS, SHOW_STAR_FIELD } = SETTINGS;
 
 	this.elements;
@@ -24,21 +24,56 @@ export function Application(parameters) {
 // DEBUG SCREEN
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	function on_admin_submit(event) {
+		event.preventDefault();
+	}
+
+	function on_savepassword_click() {
+		event.preventDefault();
+		document.cookie = 'wigglePlayerAdmin=' + self.elements.adminPassword.value;
+	}
+
+	function on_loadpassword_click() {
+		const cookie = document.cookie.split(';').find(c => c.startsWith('wigglePlayerAdmin='));
+		if (cookie) self.elements.adminPassword.value = cookie.split('=')[1];
+	}
+
 	function update_debug_stats(statsElement) {
-		const now = Date.now();
+		const first = Object.values(DEBUG.TIMES)[0];
 		const times = (
 			Object.entries(DEBUG.TIMES)
-			.sort((a, b) => b[1] - a[1])
+			//.sort((a, b) => b[1] - a[1])
 			.map(([name, time]) => (
-				`<tr><td>${name}</td><td>${(now - time)/1000}</td></tr>\n`
+				`<tr><td>${name}</td><td>${(time - first)/1000}</td></tr>\n`
 			)).join('')
 		);
 		const make_json = (obj) => JSON.stringify(obj, null, '\t');
+
+		const stringy = j => JSON.stringify(j, null, '    ').replaceAll('"', '');
+		const debug    = stringy(DEBUG);
+		const settings = stringy(SETTINGS);
+
+		const form   = statsElement.querySelector('form');
+
 		statsElement.innerHTML = untab(`
-			DEBUG.TIMES:
-			<table>${times}</table>
-			totalPlayTime: ${self.audioPlayer.totalPlayTime}
+			<header>
+				<img class="logo" src="image/earwiggle_icon.png" width="32" height="32" alt="Earwiggle Icon">
+				<h1>EMP ${PROGRAM_VERSION}</h1>
+			</header>
+			<pre>
+				DEBUG.TIMES:
+				<table>${times}</table>
+				ERRORS.AMOUNT: ${DEBUG.ERRORS.AMOUNT ? '<b>'+DEBUG.ERRORS.AMOUNT+'</b>' : 0 }
+				totalPlayTime: ${self.audioPlayer.totalPlayTime}
+			</pre><pre>
+				DEBUG: ${debug}
+			</pre><pre>
+				SETTINGS: ${settings}
+			</pre>
 		`);
+
+		const header = statsElement.querySelector('header');
+		header.append(form);
 	}
 
 
@@ -56,49 +91,39 @@ export function Application(parameters) {
 	async function toggle_starfield(enable = null) {
 		await new Promise(done => setTimeout(done));
 		const iframe = document.querySelector('iframe.starfield');
-		enable = (enable === null) ? (iframe === null) : enable;
+		const iframe_exists = iframe !== null;
+		enable = (enable === null) ? !iframe_exists : enable;
 
-		if( enable
-		&& !(enable && iframe !== null)
-		&& !(!enable && iframe === null)
-		) {
-			const param = (self.audioPlayer.audio?.paused) ? '?paused' : '';
-			document.body.insertBefore(
-				newElement({
-					tagName    : 'iframe',
-					className  : 'starfield',
-					attributes : {
-						src : 'starfield/' + param,
-					},
-				}),
-				self.elements.audioPlayer,
-			);
-			//document.body.classList.add('starfield');
-			//self.elements.config.classList.add('pressed');
-		} else {
-			iframe?.remove();
-			//document.body.classList.remove('starfield');
-			//self.elements.config.classList.remove('pressed');
+		if (self.audioPlayer) {//... Prevent error if called while booting
+			if(enable && !iframe_exists) {
+				const param = (self.audioPlayer.audio?.paused) ? '?paused' : '';
+				document.body.insertBefore(
+					newElement({
+						tagName    : 'iframe',
+						className  : 'starfield',
+						attributes : {
+							src : 'starfield/' + param,
+						},
+					}),
+					self.elements.audioPlayer,
+				);
+			}
+			else if (!enable && iframe_exists) {
+				iframe.remove();
+			}
 		}
 
-		document.body         .classList.toggle('starfield', enable);
-		self.elements.config  .classList.toggle('pressed'  , enable);
-		self.elements.lcdStars.classList.toggle('on'       , enable);
+		document.body            .classList.toggle('starfield', enable);
+		self.elements.toggleStars.classList.toggle('pressed'  , enable);
 	}
 
 	function on_keydown(event) {
-		if (!event.shiftKey && !event.ctrlKey && !event.altKey && event.key == 'd') {
+		if (!event.shiftKey && !event.ctrlKey && event.altKey && event.key == 'g') {
 			event.preventDefault();
 			document.body.classList.toggle('debug');
 			return;
 		}
-		if (!event.shiftKey && !event.ctrlKey && event.altKey && event.key == 's') {
-			event.preventDefault();
-			toggle_starfield();
-			if (DEBUG.ENABLED) console.log('main.js:on_keydown: Alt+s: toggle starfield');
-			return;
-		}
-		else if (event.shiftKey && !event.ctrlKey && event.altKey && event.key == 'S') {
+		else if (!event.shiftKey && !event.ctrlKey && event.altKey && event.key == 't') {
 			event.preventDefault();
 
 			const s = self.elements.debugStats;
@@ -147,29 +172,22 @@ export function Application(parameters) {
 
 		await boot_message('Loading HTML and CSS...');
 
-		DEBUG.TIMES.MAIN_FETCH = Date.now();
+DEBUG.TIMES.MAIN_FETCH = Date.now();
 
 		const fetch_files = (`
 			audio_player.html
 			variables.css
 			main.css
 			grids.css
-		`).trim().replace('\t', '').split('\n');
-console.log({ fetch_files });
+		`).trim().replace('\t', '').split('\n').map(line => line.trim());
+
+		if (DEBUG.ENABLED) console.log('App.init:', { fetch_files });
+
 		const response = await fetch('audio_player.html');
 		const html     = await response.text();
 		document.body.innerHTML += html;
 
-		if (DEBUG.ENABLED) {
-			console.groupCollapsed('SETTINGS');
-			console.log(JSON.stringify({SETTINGS, DEBUG}, null, '\t'));
-			console.groupEnd();
-			console.groupCollapsed('DEBUG');
-			console.log(JSON.stringify({DEBUG}, null, '\t'));
-			console.groupEnd();
-		}
-
-		DEBUG.TIMES.MAIN_UI = Date.now();
+DEBUG.TIMES.MAIN_UI = Date.now();
 
 		/// USER INTERFACE ///
 		this.ui = await new UserInterface({
@@ -178,21 +196,18 @@ console.log({ fetch_files });
 
 		// Gather elements
 		self.elements = self.ui.elements;
-console.log('main.js elements:', self.elements);
 
+		// URL ?parameters
 		const GETParams = new window.URLSearchParams(window.location.search);
 
-console.log(Object.keys(GETParams));
-
 		const autoplay_index     = (GETParams.get('playsong') || 0) - 1;
-		const load_saved_settings = GETParams.get('reset') === null;
 		document.body.classList.toggle(
 			'lyrics_right',
 			GETParams.get('lyrics') == 'right',
 		);
 
 
-		DEBUG.TIMES.MAIN_LIBRARY = Date.now();
+DEBUG.TIMES.MAIN_LIBRARY = Date.now();
 
 		/// LIBRARY ///
 		self.library = await new MusicLibrary({
@@ -222,21 +237,21 @@ console.log(Object.keys(GETParams));
 			songs = self.library.songs;
 		}
 
-		DEBUG.TIMES.MAIN_PLAYER = Date.now();
+DEBUG.TIMES.MAIN_PLAYER = Date.now();
 
 		/// PLAYER ///
 		self.audioPlayer = await new AudioPlayer({
 			SETTINGS, DEBUG,
-			elements   : self.elements,
-			library    : self.library,
-			albums     : self.library.albums,
-			songs      : songs,
-			index      : autoplay_index,
-			autoStart  : (autoplay_index >= 0),
-			loadConfig : load_saved_settings,
-			volume     : 0.25,
-			onPause    : on_player_pause,
-			onConfig   : toggle_starfield,
+			elements      : self.elements,
+			library       : self.library,
+			albums        : self.library.albums,
+			songs         : songs,
+			index         : autoplay_index,
+			autoStart     : (autoplay_index >= 0),
+			clearConfig   : CLEAR_STORAGE || GETParams.get('reset') !== null,
+			volume        : 0.25,
+			onPause       : on_player_pause,
+			onToggleStars : toggle_starfield,
 		});
 
 		// Autofocus text input
@@ -246,48 +261,24 @@ console.log(Object.keys(GETParams));
 		ft.setSelectionRange(ft.value.length, ft.value.length);
 	*/
 
-		DEBUG.TIMES.MAIN_LOAD_ALBUMS = Date.now();
+DEBUG.TIMES.MAIN_LOAD_ALBUMS = Date.now();
 
 		await self.audioPlayer.loadAlbums(self.library.albums);
 
-		DEBUG.TIMES.MAIN_STARFIELD = Date.now();
 
-		if (SHOW_STAR_FIELD) {
-			if (prefersReducedMotion()) {
-				console.log('User prefers reduced motion, starfield disabled');
-			} else {
-				/*
-				const is_fast_machine = () => {
-					const start = performance.now();
-					let sum = 0;
-					for (let i = 0; i < 1e6; i++) sum += Math.sqrt(i);
-					const end = performance.now();
-					return (end - start < 5);
-				};
-				if (is_fast_machine()) toggle_starfield();
-				*/
-				await toggle_starfield();
-			}
-		}
-
-
-		DEBUG.TIMES.MAIN_SIMPLE = Date.now();
+DEBUG.TIMES.MAIN_SIMPLE = Date.now();
 
 		// Toggle advanced after load
-		await new Promise(done => {
-			setTimeout(()=>{
-				setTimeout(()=>{
-					//...ugly Make controls smaller, when there is no room
-					//...ugly Canvas size 0 if we start with .simple
-					const scrolls = (document.documentElement.scrollHeight > window.innerHeight);
-					if (scrolls || is_iphone) {
-						//self.elements.musicPlayer.classList.add('simple');
-						//self.audioPlayer.toggleAdvancedControls(false);
-					}
-				});
-				done();
-			});
-		});
+		await new Promise(done => setTimeout(()=>{
+			//...ugly Make controls smaller, when there is no room
+			//...ugly Canvas size 0 if we start with .simple
+			const scrolls = (document.documentElement.scrollHeight > window.innerHeight);
+			if (scrolls || is_iphone) {
+				//self.elements.musicPlayer.classList.add('simple');
+				//self.audioPlayer.toggleAdvancedControls(false);
+			}
+			done();
+		}));
 
 		if (DEBUG.ENABLED) {
 			addEventListener('keydown', on_keydown);
@@ -296,7 +287,11 @@ console.log(Object.keys(GETParams));
 			on_resize();
 		}
 
-		DEBUG.TIMES.MAIN_INIT_DONE = Date.now();
+		self.elements.adminForm   .addEventListener('submit', on_admin_submit);
+		self.elements.savePassword.addEventListener('click' , on_savepassword_click);
+		self.elements.loadPassword.addEventListener('click' , on_loadpassword_click);
+
+DEBUG.TIMES.MAIN_INIT_DONE = Date.now();
 	};
 
 
